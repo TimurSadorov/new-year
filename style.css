@@ -33,7 +33,19 @@ button { font: inherit; }
     linear-gradient(180deg, #0c172c8c 0%, #0c172c16 56%, #0c172c9e 100%);
 }
 
+.snowfall {
+  position: fixed;
+  inset: 0;
+  z-index: 2;
+  width: 100%;
+  height: 100%;
+  pointer-events: none;
+}
+
 .topbar {
+  position: sticky;
+  z-index: 3;
+  top: 0;
   display: flex;
   align-items: center;
   justify-content: space-between;
@@ -42,6 +54,8 @@ button { font: inherit; }
   margin-inline: auto;
   padding: 1.2rem clamp(1rem, 4.5vw, 4.5rem);
   min-height: 4.75rem;
+  background: linear-gradient(180deg, #0c172ce0, #0c172ca1);
+  backdrop-filter: blur(12px);
 }
 
 .wordmark {
@@ -56,6 +70,37 @@ button { font: inherit; }
 .wordmark span { color: var(--gold); font-size: 1.55rem; line-height: 1; }
 .topbar__details { display: flex; align-items: center; gap: clamp(0.55rem, 2vw, 1rem); }
 .edition { font-size: 0.875rem; color: var(--muted); white-space: nowrap; }
+
+.music-toggle {
+  min-width: 2.75rem;
+  min-height: 2.75rem;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 0.5rem;
+  padding: 0.4rem 0.8rem;
+  border: 1px solid #d2d9e767;
+  border-radius: 999px;
+  background: #152237c9;
+  color: var(--muted);
+  font-size: 0.875rem;
+  cursor: pointer;
+  transition: border-color 160ms ease, background 160ms ease;
+}
+
+.music-toggle:hover, .music-toggle[aria-pressed="true"] { border-color: #f4cc869e; color: var(--gold); }
+.music-toggle:hover { background: #26324a; }
+.music-toggle__icon { position: relative; display: inline-grid; place-items: center; width: 1.2rem; font-size: 1.15rem; line-height: 1; }
+
+.music-toggle[aria-pressed="false"] .music-toggle__icon::after {
+  content: "";
+  position: absolute;
+  width: 1.15rem;
+  height: 1px;
+  transform: rotate(-42deg);
+  background: currentColor;
+  box-shadow: 0 -1px #152237;
+}
 
 .preview-badge {
   padding: 0.23rem 0.6rem;
@@ -122,10 +167,10 @@ button { font: inherit; }
 .trail-link:hover { background: var(--gold); color: var(--night); }
 
 .calendar {
-  width: min(100%, 40rem);
+  width: min(100%, 46rem);
   margin-inline: auto;
   padding-bottom: 4rem;
-  scroll-margin-top: 1rem;
+  scroll-margin-top: 5.5rem;
 }
 
 .calendar__header { padding-inline: 0.85rem; text-align: center; text-shadow: 0 2px 12px var(--night); }
@@ -133,10 +178,43 @@ button { font: inherit; }
 .calendar__header p { min-height: 1.35rem; margin: 0.55rem 0 0.7rem; color: var(--muted); font-size: 0.9rem; }
 
 .track { position: relative; }
-.track__path, .track__days { position: absolute; inset: 0; width: 100%; height: 100%; }
+.track__scenery, .track__path, .track__days { position: absolute; inset: 0; width: 100%; height: 100%; }
+.track__scenery { pointer-events: none; overflow: clip; }
 .track__path { pointer-events: none; }
 .track__days { list-style: none; margin: 0; padding: 0; }
-.day { position: absolute; transform: translate(-50%, -50%); }
+.day { position: absolute; transform: translate(-50%, -50%); scroll-margin-top: 6rem; }
+
+.decoration {
+  position: absolute;
+  width: clamp(4.6rem, 19vw, 9rem);
+  transform: translate(-50%, -50%);
+}
+
+.decoration img {
+  position: relative;
+  display: block;
+  width: 100%;
+  height: auto;
+  filter: drop-shadow(0 0.45rem 0.45rem #070f21a8);
+}
+
+.decoration--small img { transform: scale(0.77); }
+.decoration--parcels { width: clamp(3.7rem, 14vw, 6rem); }
+.decoration--lantern { width: clamp(3.2rem, 11vw, 5.2rem); }
+
+.decoration--lantern::before {
+  content: "";
+  position: absolute;
+  inset: -25% -60%;
+  background: radial-gradient(ellipse, #ffbb613d 0%, #ffb05813 37%, transparent 68%);
+  animation: lantern-glow 4.8s ease-in-out infinite alternate;
+  animation-delay: var(--glow-delay, 0s);
+}
+
+@keyframes lantern-glow {
+  from { opacity: 0.48; }
+  to { opacity: 0.95; }
+}
 
 .day__button {
   position: relative;
@@ -273,7 +351,13 @@ button { font: inherit; }
 }
 
 .gift-dialog::backdrop { background: #080e1abb; backdrop-filter: blur(5px); }
+.gift-dialog[open] { animation: gift-reveal 220ms ease-out; }
 body:has(.gift-dialog[open]) { overflow: hidden; }
+
+@keyframes gift-reveal {
+  from { opacity: 0; transform: translateY(0.6rem) scale(0.97); }
+  to { opacity: 1; transform: translateY(0) scale(1); }
+}
 
 .close {
   position: absolute;
@@ -313,18 +397,20 @@ body:has(.gift-dialog[open]) { overflow: hidden; }
 
 @media (max-width: 42rem) {
   .forest { background-image: url("./assets/winter-forest-mobile.jpg"); }
-  .topbar { min-height: 3.8rem; padding-block: 0.9rem; }
+  .topbar { min-height: 3.8rem; padding-block: 0.6rem; }
+  .music-toggle { padding-inline: 0.55rem; }
+  .music-toggle__label { display: none; }
   .intro { padding-top: 3.4rem; }
   .day__button { width: 3rem; height: 3rem; }
   .day__number { font-size: 1.36rem; }
 }
 
-@media (max-width: 22rem) {
+@media (max-width: 25rem) {
   .topbar { padding-inline: 0.7rem; }
   .wordmark { gap: 0.35rem; }
-  .preview-badge + .edition { font-size: 0.8rem; }
+  .preview-badge:not([hidden]) + .edition { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
-  *, *::before, *::after { transition: none !important; }
+  *, *::before, *::after { animation: none !important; transition: none !important; }
 }

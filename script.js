@@ -25,6 +25,16 @@ const rows = positions.map((x, index) => ({
   y: 43 + index * 76 + (index === dayCount - 1 ? 42 : 0),
 }));
 const trackHeight = rows.at(-1).y + 53;
+// Place scenery in the clearings alongside the day markers.
+const decorations = [
+  [1, 16, 34, "pine"], [2, 87, -14, "lantern"], [3, 24, 26, "parcels"],
+  [5, 86, 12, "pine", true], [7, 78, -12, "lantern"], [8, 14, 36, "parcels"],
+  [10, 16, -12, "pine"], [11, 88, 22, "lantern", true], [13, 82, 12, "parcels"],
+  [15, 79, 6, "pine"], [16, 15, 33, "lantern"], [18, 15, -10, "parcels"],
+  [20, 18, 20, "pine"], [21, 88, 13, "lantern"], [23, 79, -4, "parcels"],
+  [24, 88, 20, "pine", true], [26, 15, 12, "lantern"], [28, 25, -14, "pine"],
+  [30, 85, 5, "lantern"], [31, 27, -23, "parcels"], [31, 81, -17, "pine", true],
+];
 
 let viewed = readViewedDays();
 let giftRequest;
@@ -34,6 +44,24 @@ let dateKey;
 document.querySelector("#edition").textContent = `Декабрь ${calendarYear}`;
 document.querySelector("#preview-badge").hidden = !preview;
 track.style.height = `${trackHeight}px`;
+
+const scenery = document.querySelector("#scenery");
+decorations.forEach(([day, x, offset, kind, small], index) => {
+  const decoration = document.createElement("span");
+  decoration.className = `decoration decoration--${kind}${small ? " decoration--small" : ""}`;
+  decoration.style.left = `${x}%`;
+  decoration.style.top = `${rows[day - 1].y + offset}px`;
+  decoration.style.setProperty("--glow-delay", `${-index * 0.47}s`);
+
+  const image = document.createElement("img");
+  image.src = `./assets/trail-${kind}.png`;
+  image.alt = "";
+  image.decoding = "async";
+  image.width = 384;
+  image.height = 384;
+  decoration.append(image);
+  scenery.append(decoration);
+});
 
 const days = rows.map(({ x, y }, index) => {
   const day = index + 1;

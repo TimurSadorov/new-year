@@ -9,15 +9,22 @@
   <link rel="icon" type="image/png" href="./assets/icon.png">
   <link rel="stylesheet" href="./style.css">
   <script src="./script.js" defer></script>
+  <script src="./atmosphere.js" defer></script>
 </head>
 <body id="top">
   <div class="forest" aria-hidden="true"></div>
+  <canvas class="snowfall" id="snowfall" aria-hidden="true"></canvas>
+  <audio id="winter-music" src="./assets/winter-waltz.m4a" preload="none" loop></audio>
 
   <header class="topbar">
     <a class="wordmark" href="#top"><span aria-hidden="true">✦</span> Сладкий декабрь</a>
     <div class="topbar__details">
       <span class="preview-badge" id="preview-badge" hidden>Демо</span>
       <span class="edition" id="edition">Декабрь 2026</span>
+      <button class="music-toggle" id="music-toggle" type="button" aria-label="Музыка" aria-pressed="false" title="Включить музыку" hidden>
+        <span class="music-toggle__icon" aria-hidden="true">♫</span>
+        <span class="music-toggle__label">Музыка</span>
+      </button>
     </div>
   </header>
 
@@ -35,6 +42,7 @@
         <p id="calendar-status" aria-live="polite"></p>
       </div>
       <div class="track" id="track">
+        <div class="track__scenery" id="scenery" aria-hidden="true"></div>
         <canvas class="track__path" id="track-path" aria-hidden="true"></canvas>
         <ol class="track__days" id="days" aria-label="31 день декабря"></ol>
       </div>
