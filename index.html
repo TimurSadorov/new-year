@@ -1,0 +1,58 @@
+<!doctype html>
+<html lang="ru">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="theme-color" content="#0c172c">
+  <meta name="description" content="Новогодний адвент-календарь. Тридцать один день, тропинка через зимний лес и сладкие сюрпризы.">
+  <title>Твой сладкий декабрь</title>
+  <link rel="icon" type="image/png" href="./assets/icon.png">
+  <link rel="stylesheet" href="./style.css">
+  <script src="./script.js" defer></script>
+</head>
+<body id="top">
+  <div class="forest" aria-hidden="true"></div>
+
+  <header class="topbar">
+    <a class="wordmark" href="#top"><span aria-hidden="true">✦</span> Сладкий декабрь</a>
+    <div class="topbar__details">
+      <span class="preview-badge" id="preview-badge" hidden>Демо</span>
+      <span class="edition" id="edition">Декабрь 2026</span>
+    </div>
+  </header>
+
+  <main>
+    <section class="intro" aria-labelledby="title">
+      <div class="ornament" aria-hidden="true">✧</div>
+      <h1 id="title">Твой сладкий<br><em>декабрь</em></h1>
+      <p class="intro__subtitle">Сладкие сюрпризы на каждый день декабря.</p>
+      <a class="trail-link" id="trail-link" href="#trail">На тропинку</a>
+    </section>
+
+    <section class="calendar" id="trail" aria-label="Дни декабря">
+      <div class="calendar__header">
+        <h2>Тропинка декабря</h2>
+        <p id="calendar-status" aria-live="polite"></p>
+      </div>
+      <div class="track" id="track">
+        <canvas class="track__path" id="track-path" aria-hidden="true"></canvas>
+        <ol class="track__days" id="days" aria-label="31 день декабря"></ol>
+      </div>
+      <noscript>Включи JavaScript, чтобы открывать подарки.</noscript>
+      <div class="finish" aria-hidden="true"><span></span> ✦ <span></span></div>
+    </section>
+  </main>
+
+  <dialog class="gift-dialog" id="gift-dialog" aria-labelledby="gift-title">
+    <button class="close" id="dismiss" type="button" aria-label="Закрыть" autofocus>×</button>
+    <div class="gift-dialog__art" id="gift-art">
+      <img id="gift-image" width="512" height="512" alt="">
+    </div>
+    <div class="gift-dialog__content">
+      <p class="gift-dialog__date" id="gift-date"></p>
+      <h2 id="gift-title"></h2>
+      <p id="gift-message" hidden></p>
+    </div>
+  </dialog>
+</body>
+</html>
