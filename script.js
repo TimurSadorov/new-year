@@ -85,15 +85,25 @@ function currentDate() {
   return { today, available: preview ? dayCount : available };
 }
 
-function refreshDays() {
+function calendarProgress() {
   const { today, available } = currentDate();
+  let completed = 0;
+  while (completed < available && viewed.has(completed + 1)) completed++;
+  const nextDay = completed < available ? completed + 1 : null;
+  return { today, available, completed, nextDay };
+}
+
+function refreshDays() {
+  const { today, available, completed, nextDay } = calendarProgress();
   dateKey = `${today}:${available}`;
+  setTrailProgress(completed);
 
   days.forEach(({ button, mark, caption }, index) => {
     const day = index + 1;
-    const open = day <= available;
-    const seen = open && viewed.has(day);
+    const seen = day <= completed;
+    const open = seen || day === nextDay;
     button.dataset.open = String(open);
+    button.toggleAttribute("data-next", day === nextDay);
     button.setAttribute("aria-label", `${day} декабря, ${!open ? "подарок закрыт" : seen ? "подарок просмотрен" : "открыть подарок"}`);
     if (day === today) button.setAttribute("aria-current", "date");
     else button.removeAttribute("aria-current");
@@ -102,18 +112,18 @@ function refreshDays() {
     mark.className = `day__mark${seen ? " day__mark--viewed" : open ? "" : " day__mark--locked"}`;
     mark.textContent = seen ? "✓" : "";
 
-    caption.textContent = day === today ? "Сегодня" : day === dayCount ? "Новый год" : "";
+    caption.textContent = day === today ? "Сегодня" : day === dayCount ? "Новый год" : day === nextDay ? "Следующий" : "";
     caption.hidden = !caption.textContent;
   });
 
-  status.textContent = preview
-    ? "В демо можно открыть любой день."
-    : today ? `Сегодня ${today} декабря`
-    : available ? "Все подарки открыты."
-    : `Первый подарок откроется 1 декабря ${calendarYear} года.`;
+  if (!available) status.textContent = `Первый подарок откроется 1 декабря ${calendarYear} года.`;
+  else if (completed === dayCount) status.textContent = "Все подарки открыты.";
+  else if (nextDay) status.textContent = `Открывай по порядку. Дальше — ${nextDay} декабря.`;
+  else status.textContent = "Все доступные подарки открыты.";
 
-  trailLink.textContent = today && !preview ? "К сегодняшнему дню" : "На тропинку";
-  trailLink.href = today && !preview ? `#day-${today}` : "#trail";
+  const jumpToNext = nextDay && nextDay > 1;
+  trailLink.textContent = jumpToNext ? "К следующему подарку" : "На тропинку";
+  trailLink.href = jumpToNext ? `#day-${nextDay}` : "#trail";
 }
 
 function checkDate() {
@@ -138,21 +148,15 @@ async function openDay(day) {
   const request = ++selection;
   checkDate();
 
-  if (day > currentDate().available) {
-    showDialog(day, "Подарок пока закрыт", `Откроется ${day} декабря.`);
-    return;
-  }
+  if (showLockedDay(day)) return;
 
   // Preview always uses sample cards, even after the real gifts are added.
   const gift = preview
     ? { name: day === dayCount ? "Особый подарок" : `Сюрприз №${day}`, image: null }
     : (await loadGifts())?.get(day);
   if (request !== selection) return;
-  if (day > currentDate().available) {
-    checkDate();
-    showDialog(day, "Подарок пока закрыт", `Откроется ${day} декабря.`);
-    return;
-  }
+  checkDate();
+  if (showLockedDay(day)) return;
   if (!gift?.name) {
     showDialog(day, "Подарок не загрузился", "Попробуй снова чуть позже.");
     return;
@@ -160,6 +164,16 @@ async function openDay(day) {
 
   showDialog(day, gift.name, "", gift.image || placeholderImage, !viewed.has(day));
   markViewed(day);
+}
+
+function showLockedDay(day) {
+  const { available, completed, nextDay } = calendarProgress();
+  const message = day > available
+    ? `Откроется ${day} декабря.`
+    : day > completed && day !== nextDay ? `Сначала открой подарок за ${nextDay} декабря.` : null;
+  if (!message) return false;
+  showDialog(day, "Подарок пока закрыт", message);
+  return true;
 }
 
 function showDialog(day, title, message, image, firstOpening = false) {
@@ -294,15 +308,16 @@ window.addEventListener("storage", (event) => {
   refreshDays();
 });
 
-mountTrail(track, days);
+const setTrailProgress = mountTrail(track, days);
 window.addEventListener("focus", checkDate);
 document.addEventListener("visibilitychange", checkDate);
 window.setInterval(checkDate, 30_000);
 
 refreshDays();
-const { today } = currentDate();
-if (!preview && today && today > 1 && !location.hash) {
+const { today, nextDay } = calendarProgress();
+const firstStop = nextDay ?? today;
+if (!preview && firstStop > 1 && !location.hash) {
   window.addEventListener("load", () => {
-    if (window.scrollY === 0) days[today - 1].node.scrollIntoView({ block: "center" });
+    if (window.scrollY === 0) days[firstStop - 1].node.scrollIntoView({ block: "center" });
   }, { once: true });
 }

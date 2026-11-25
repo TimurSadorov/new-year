@@ -15,7 +15,8 @@ function setUpTimeOfDay() {
 
     if (root.dataset.time !== timeOfDay) {
       root.dataset.time = timeOfDay;
-      if (timeOfDay === "dawn" && !frost.childElementCount) addFrostPatches(frost);
+      if (timeOfDay === "night" && !frost.childElementCount) addFrostPatches(frost);
+      document.dispatchEvent(new Event("winter-time-change"));
     }
 
     if (previewTime) return;
@@ -57,9 +58,15 @@ function setUpSnow() {
   if (!context) return;
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+  const climates = {
+    dawn: { spacing: 3400, min: 155, max: 420, fall: 29, speed: 61, wind: 119, gust: 52, streak: 0.08 },
+    day: { spacing: 3900, min: 140, max: 365, fall: 18, speed: 39, wind: 8, gust: 10, streak: 0 },
+    night: { spacing: 6100, min: 76, max: 220, fall: 8, speed: 24, wind: 2, gust: 3, streak: 0 },
+  };
   let width;
   let height;
-  let flakes;
+  let flakes = [];
+  let weather;
   let frame = 0;
   let lastTime = 0;
   let elapsed = 0;
@@ -73,35 +80,51 @@ function setUpSnow() {
     canvas.height = Math.round(height * scale);
     context.setTransform(scale, 0, 0, scale, 0, 0);
     context.fillStyle = "#f6faff";
-    context.strokeStyle = "#52738f";
-    context.lineWidth = 0.5;
+    flakes = [];
+    updateWeather();
+  }
 
-    const count = Math.min(320, Math.max(96, Math.round(width * height / 4500)));
-    flakes = Array.from({ length: count }, () => {
+  function updateWeather() {
+    weather = climates[document.documentElement.dataset.time] ?? climates.night;
+    const count = Math.min(weather.max, Math.max(weather.min, Math.round(width * height / weather.spacing)));
+    while (flakes.length < count) {
       const depth = Math.random() ** 2;
-      return {
+      flakes.push({
         x: Math.random() * width,
         y: Math.random() * height,
         radius: 0.72 + depth * 2.45,
-        speed: 17 + depth * 49,
-        drift: 3 + depth * 16,
+        depth,
         opacity: 0.26 + depth * 0.62,
         phase: Math.random() * Math.PI * 2,
-      };
-    });
+      });
+    }
+    flakes.length = count;
     draw(0);
   }
 
   function draw(seconds) {
     elapsed += seconds;
     context.clearRect(0, 0, width, height);
-    const daylight = document.documentElement.dataset.time !== "night";
+    const daylight = weather !== climates.night;
+    const gust = weather.gust * (0.58 * Math.sin(elapsed * 0.83) + 0.28 * Math.sin(elapsed * 1.63));
     for (const flake of flakes) {
-      flake.x += (flake.drift + 7 * Math.sin(elapsed * 1.25 + flake.phase)) * seconds;
-      flake.y += flake.speed * seconds;
-      if (flake.x > width + 4) flake.x = -4;
-      if (flake.x < -4) flake.x = width + 4;
-      if (flake.y > height + 4) flake.y = -4;
+      const sideways = (weather.wind + gust) * (0.66 + flake.depth * 0.63) + 5 * Math.sin(elapsed * 1.25 + flake.phase);
+      const downward = weather.fall + flake.depth * weather.speed;
+      flake.x += sideways * seconds;
+      flake.y += downward * seconds;
+      if (flake.x > width + 15) flake.x = -15;
+      if (flake.x < -15) flake.x = width + 15;
+      if (flake.y > height + 15) flake.y = -15;
+
+      if (weather.streak && flake.depth > 0.27) {
+        context.globalAlpha = flake.opacity * 0.48;
+        context.strokeStyle = "#edf7ff";
+        context.lineWidth = flake.radius * 0.76;
+        context.beginPath();
+        context.moveTo(flake.x - sideways * weather.streak, flake.y - downward * weather.streak);
+        context.lineTo(flake.x, flake.y);
+        context.stroke();
+      }
 
       context.globalAlpha = flake.opacity;
       context.beginPath();
@@ -109,6 +132,8 @@ function setUpSnow() {
       context.fill();
       if (daylight && flake.radius > 1.6) {
         context.globalAlpha = flake.opacity * 0.43;
+        context.strokeStyle = "#52738f";
+        context.lineWidth = 0.5;
         context.stroke();
       }
     }
@@ -130,6 +155,7 @@ function setUpSnow() {
   updateMotion();
   new ResizeObserver(resize).observe(canvas);
   reducedMotion.addEventListener("change", updateMotion);
+  document.addEventListener("winter-time-change", updateWeather);
   document.addEventListener("visibilitychange", updateMotion);
 }
 
@@ -137,6 +163,11 @@ function setUpMusic() {
   const music = document.querySelector("#winter-music");
   const toggle = document.querySelector("#music-toggle");
   const preferenceKey = "sweet-december:music";
+  const recordings = {
+    dawn: "./assets/morning-snow.m4a",
+    day: "./assets/sunlit-path.m4a",
+    night: "./assets/winter-waltz.m4a",
+  };
   let enabled = true;
 
   try {
@@ -155,6 +186,12 @@ function setUpMusic() {
 
   function start() {
     if (enabled && music.paused) music.play().catch(updateControl);
+  }
+
+  function changeRecording() {
+    music.src = recordings[document.documentElement.dataset.time] ?? recordings.night;
+    updateControl();
+    start();
   }
 
   toggle.addEventListener("click", () => {
@@ -176,7 +213,8 @@ function setUpMusic() {
   document.addEventListener("click", (event) => {
     if (event.isTrusted && !toggle.contains(event.target)) start();
   }, { capture: true });
-  start();
+  document.addEventListener("winter-time-change", changeRecording);
+  changeRecording();
 }
 
 setUpTimeOfDay();

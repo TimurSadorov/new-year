@@ -26,11 +26,20 @@ const woodland = ["grove", "grove", "pine", "grove", "grove", "pine", "drift", "
 
 export function mountTrail(track, days) {
   const canvas = track.querySelector("#track-path");
+  const progress = track.querySelector("#track-progress");
   const landscape = track.querySelector("#scenery");
   const lights = track.querySelector("#scenery-lights");
   let previousWidth = 0;
   let geometry;
   let images;
+  let openedThrough = 0;
+
+  function renderProgress() {
+    if (!geometry) return;
+    const { route, dayStops, width, height, halfWidth } = geometry;
+    const goldenEnd = openedThrough ? dayStops[openedThrough - 1] : 0;
+    paintTrailLights(progress, route, width, height, halfWidth, goldenEnd);
+  }
 
   function renderLandscapes() {
     if (!images || !geometry) return;
@@ -51,7 +60,7 @@ export function mountTrail(track, days) {
     const last = waypoints.at(-1);
     const height = last.y + (phone ? 108 : 140);
     const halfWidth = phone ? Math.min(40, Math.max(24, width * 0.078)) : Math.min(71, Math.max(38, width * 0.048));
-    const route = sampleRoute([
+    const { route, dayStops } = sampleRoute([
       { x: first.x - width * 0.08, y: 8 },
       ...waypoints,
       { x: last.x + width * 0.04, y: last.y + 36 },
@@ -65,8 +74,9 @@ export function mountTrail(track, days) {
       caption.classList.toggle("day__caption--left", x > width * 0.54 || index === waypoints.length - 1);
     });
     paintSnowPath(canvas, route, width, height, halfWidth);
-    geometry = { route, last, width, height, halfWidth, phone };
+    geometry = { route, dayStops, last, width, height, halfWidth, phone };
     renderLandscapes();
+    renderProgress();
   }
 
   layout();
@@ -75,6 +85,11 @@ export function mountTrail(track, days) {
     images = assets;
     renderLandscapes();
   });
+  return (completed) => {
+    if (completed === openedThrough) return;
+    openedThrough = completed;
+    renderProgress();
+  };
 }
 
 function randomSequence(seed) {
@@ -86,6 +101,7 @@ function randomSequence(seed) {
 
 function sampleRoute(points) {
   const samples = [];
+  const dayStops = [];
 
   function interpolate(before, start, end, after, t) {
     const startTangent = (end - before) * 0.4;
@@ -110,10 +126,11 @@ function sampleRoute(points) {
         y: interpolate(before.y, start.y, end.y, after.y, t),
       });
     }
+    if (index + 2 < points.length) dayStops.push(samples.length - 1);
   }
 
   let distance = 0;
-  return samples.map((point, index) => {
+  const route = samples.map((point, index) => {
     const before = samples[index - 1] ?? point;
     const after = samples[index + 1] ?? point;
     const dx = after.x - before.x;
@@ -122,16 +139,54 @@ function sampleRoute(points) {
     distance += Math.hypot(point.x - before.x, point.y - before.y);
     return { ...point, distance, normalX: -dy / length, normalY: dx / length };
   });
+  return { route, dayStops };
 }
 
 function prepareSurface(canvas, width, height) {
   // Limit the backing surface for long pages and high-density mobile screens.
   const scale = Math.min(window.devicePixelRatio || 1, 1.6, 4000 / Math.max(width, height), Math.sqrt(9e6 / (width * height)));
-  canvas.width = Math.round(width * scale);
-  canvas.height = Math.round(height * scale);
+  const pixelWidth = Math.round(width * scale);
+  const pixelHeight = Math.round(height * scale);
+  if (canvas.width !== pixelWidth || canvas.height !== pixelHeight) {
+    canvas.width = pixelWidth;
+    canvas.height = pixelHeight;
+  }
   const context = canvas.getContext("2d");
   context?.setTransform(scale, 0, 0, scale, 0, 0);
+  context?.clearRect(0, 0, width, height);
   return { context, scale };
+}
+
+function paintTrailLights(canvas, route, width, height, halfWidth, goldenEnd) {
+  const { context, scale } = prepareSurface(canvas, width, height);
+  if (!context) return;
+  context.lineCap = "round";
+  context.lineJoin = "round";
+
+  function trace(end) {
+    context.beginPath();
+    context.moveTo(route[0].x, route[0].y);
+    for (let index = 1; index <= end; index++) context.lineTo(route[index].x, route[index].y);
+  }
+
+  function light(glowWidth, tint, haze, blur) {
+    context.lineWidth = halfWidth * glowWidth;
+    context.strokeStyle = tint;
+    context.shadowColor = haze;
+    context.shadowBlur = blur * scale;
+    context.stroke();
+  }
+
+  trace(route.length - 1);
+  light(1.46, "#b8def425", "#b3deff98", 22);
+
+  if (goldenEnd) {
+    trace(goldenEnd);
+    light(1.72, "#f7bd6529", "#ffd695a1", 24);
+    for (const layer of [1.54, 1.42, 1.3, 1.18, 1.06, 0.94, 0.82]) {
+      light(layer, "#ffda9223", "transparent", 0);
+    }
+  }
 }
 
 function paintSnowPath(canvas, route, width, height, halfWidth) {
