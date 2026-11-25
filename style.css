@@ -17,22 +17,6 @@ a { color: inherit; }
 button { font: inherit; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
 
-.forest {
-  position: fixed;
-  inset: 0;
-  z-index: -1;
-  background: #172941 url("./assets/winter-forest.jpg") center center / cover no-repeat;
-}
-
-.forest::after {
-  content: "";
-  position: absolute;
-  inset: 0;
-  background:
-    radial-gradient(ellipse at 50% 30%, #0c172c30 0%, transparent 64%),
-    linear-gradient(180deg, #0c172c8c 0%, #0c172c16 56%, #0c172c9e 100%);
-}
-
 .snowfall {
   position: fixed;
   inset: 0;
@@ -43,33 +27,23 @@ button { font: inherit; }
 }
 
 .topbar {
-  position: sticky;
+  position: absolute;
   z-index: 3;
-  top: 0;
+  inset: 0 0 auto;
+  padding: 1.8rem clamp(1rem, 4vw, 4rem);
+  pointer-events: none;
+}
+
+.topbar__details {
+  position: fixed;
+  top: 1rem;
+  right: clamp(1rem, 4vw, 4rem);
   display: flex;
   align-items: center;
-  justify-content: space-between;
-  gap: 0.75rem;
-  max-width: 86rem;
-  margin-inline: auto;
-  padding: 1.2rem clamp(1rem, 4.5vw, 4.5rem);
-  min-height: 4.75rem;
-  background: linear-gradient(180deg, #0c172ce0, #0c172ca1);
-  backdrop-filter: blur(12px);
-}
-
-.wordmark {
-  display: inline-flex;
-  align-items: center;
   gap: 0.65rem;
-  font-family: Georgia, "Times New Roman", serif;
-  font-size: clamp(1.05rem, 2.1vw, 1.35rem);
-  text-decoration: none;
 }
 
-.wordmark span { color: var(--gold); font-size: 1.55rem; line-height: 1; }
-.topbar__details { display: flex; align-items: center; gap: clamp(0.55rem, 2vw, 1rem); }
-.edition { font-size: 0.875rem; color: var(--muted); white-space: nowrap; }
+.edition { font-size: 0.875rem; color: var(--muted); white-space: nowrap; text-shadow: 0 1px 8px var(--night); }
 
 .music-toggle {
   min-width: 2.75rem;
@@ -85,6 +59,8 @@ button { font: inherit; }
   color: var(--muted);
   font-size: 0.875rem;
   cursor: pointer;
+  pointer-events: auto;
+  backdrop-filter: blur(8px);
   transition: border-color 160ms ease, background 160ms ease;
 }
 
@@ -111,83 +87,101 @@ button { font: inherit; }
   background: #101a2a9c;
 }
 
+main {
+  position: relative;
+  isolation: isolate;
+  overflow-x: clip;
+  background: #263d52;
+}
+
+.terrain {
+  position: absolute;
+  inset: 0;
+  z-index: -2;
+  overflow: hidden;
+  pointer-events: none;
+}
+
+/* Mirror adjacent pieces of the snow texture so their edges meet. */
+.terrain span {
+  display: block;
+  height: max(100vw, 42rem, 640px);
+  background: url("./assets/snowfield.jpg") center / max(100vw, 42rem, 640px) 100% no-repeat;
+}
+
+.terrain span:nth-child(even) { transform: scaleY(-1); }
+
+.terrain::after {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse at 77% 93%, #a177433d, transparent 31%),
+    radial-gradient(ellipse at 9% 51%, #43657037, transparent 36%),
+    linear-gradient(90deg, #0e223964, #24435714 50%, #10243564);
+}
+
+main::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 0 0 auto;
+  height: clamp(28rem, 48vw, 46rem);
+  background:
+    radial-gradient(ellipse at 50% 30%, #0e203b78 0%, transparent 68%),
+    url("./assets/winter-forest.jpg") center 28% / cover;
+  mask-image: linear-gradient(#000 0 41%, transparent 100%);
+}
+
 .intro {
+  position: relative;
+  z-index: 1;
   display: grid;
   justify-items: center;
-  padding: clamp(2.5rem, 7vh, 5rem) 1.2rem clamp(2.9rem, 7vh, 5.8rem);
+  padding: clamp(6.1rem, 10vw, 9rem) 1.15rem 0.95rem;
   text-align: center;
-  text-shadow: 0 3px 30px #0c172c, 0 2px 5px #0c172c9e;
+  text-shadow: 0 2px 24px #102137, 0 2px 6px #102137ad;
 }
-
-.ornament {
-  color: var(--gold);
-  display: flex;
-  align-items: center;
-  gap: 0.75rem;
-  font-size: 1.7rem;
-  line-height: 1;
-  margin-bottom: 0.9rem;
-}
-
-.ornament::before, .ornament::after {
-  content: "";
-  width: 1.65rem;
-  height: 1px;
-  background: linear-gradient(90deg, transparent, #f4cc8680);
-}
-
-.ornament::after { transform: scaleX(-1); }
 
 .intro h1 {
   margin: 0;
   font-family: Georgia, "Times New Roman", serif;
   font-weight: 400;
-  font-size: clamp(3.2rem, 9.7vw, 7.1rem);
-  letter-spacing: -0.056em;
-  line-height: 0.93;
+  font-size: clamp(2.3rem, 4.8vw, 4.35rem);
+  letter-spacing: -0.052em;
+  line-height: 1.04;
+  text-wrap: balance;
 }
 
-.intro h1 em { color: var(--gold); font-weight: 400; }
-.intro__subtitle { margin: 1.55rem 0 1.5rem; color: var(--muted); }
+.intro h1 em { color: #f7dfb9; font-weight: 400; }
+.intro__status { margin: 0.85rem 0 0.12rem; color: #e3ebf3; max-width: 36ch; }
 
 .trail-link {
-  min-height: 2.8rem;
+  min-height: 2.75rem;
   display: inline-grid;
   place-items: center;
-  padding: 0.6rem 1.45rem;
-  border: 1px solid #f4cc8694;
-  border-radius: 999px;
-  background: #142337db;
-  color: var(--cream);
-  text-decoration: none;
-  text-shadow: none;
-  transition: background 160ms ease, color 160ms ease;
+  padding-inline: 0.6rem;
+  color: #f7dfb9;
+  text-decoration-color: #f7dfb977;
+  text-underline-offset: 0.3em;
+  transition: color 160ms ease;
 }
 
-.trail-link:hover { background: var(--gold); color: var(--night); }
+.trail-link:hover { color: #fff7e8; }
 
-.calendar {
-  width: min(100%, 46rem);
-  margin-inline: auto;
-  padding-bottom: 4rem;
-  scroll-margin-top: 5.5rem;
-}
-
-.calendar__header { padding-inline: 0.85rem; text-align: center; text-shadow: 0 2px 12px var(--night); }
-.calendar__header h2 { font: 400 clamp(1.5rem, 4vw, 2.1rem)/1.1 Georgia, "Times New Roman", serif; margin: 0; }
-.calendar__header p { min-height: 1.35rem; margin: 0.55rem 0 0.7rem; color: var(--muted); font-size: 0.9rem; }
+.calendar { scroll-margin-top: 0.8rem; }
 
 .track { position: relative; }
 .track__scenery, .track__path, .track__days { position: absolute; inset: 0; width: 100%; height: 100%; }
-.track__scenery { pointer-events: none; overflow: clip; }
-.track__path { pointer-events: none; }
+.track__scenery { pointer-events: none; }
+.track__path { pointer-events: none; mask-image: linear-gradient(transparent, #000 68px); }
 .track__days { list-style: none; margin: 0; padding: 0; }
 .day { position: absolute; transform: translate(-50%, -50%); scroll-margin-top: 6rem; }
 
 .decoration {
   position: absolute;
-  width: clamp(4.6rem, 19vw, 9rem);
-  transform: translate(-50%, -50%);
+  width: var(--piece-size);
+  transform: translate(-50%, -60%);
 }
 
 .decoration img {
@@ -195,18 +189,17 @@ button { font: inherit; }
   display: block;
   width: 100%;
   height: auto;
-  filter: drop-shadow(0 0.45rem 0.45rem #070f21a8);
+  transform: scaleX(var(--mirror, 1));
+  filter: drop-shadow(0 0.38rem 0.5rem #142438a8);
 }
 
-.decoration--small img { transform: scale(0.77); }
-.decoration--parcels { width: clamp(3.7rem, 14vw, 6rem); }
-.decoration--lantern { width: clamp(3.2rem, 11vw, 5.2rem); }
+.decoration--grove img { filter: brightness(0.87) saturate(0.86) drop-shadow(0 0.55rem 0.7rem #0e233998); }
 
-.decoration--lantern::before {
+.decoration--lantern::before, .decoration--cottage::before, .decoration--finale::before {
   content: "";
   position: absolute;
-  inset: -25% -60%;
-  background: radial-gradient(ellipse, #ffbb613d 0%, #ffb05813 37%, transparent 68%);
+  inset: 0 -55% -10%;
+  background: radial-gradient(ellipse, #ffd79755 0%, #ffb0581f 37%, transparent 68%);
   animation: lantern-glow 4.8s ease-in-out infinite alternate;
   animation-delay: var(--glow-delay, 0s);
 }
@@ -237,9 +230,9 @@ button { font: inherit; }
 .day__number { font: 400 1.48rem/1 Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; }
 
 .day__button[data-open="true"] {
-  border-color: #f5d090;
-  background: linear-gradient(145deg, #655338, #2b2b30 72%);
-  box-shadow: 0 0 0 4px #f4cc8629, 0 0 22px #e2ab5e46, 0 6px 12px #060d1cb0, inset 0 1px #ffedc158;
+  border-color: #f5d6a1;
+  background: linear-gradient(145deg, #426357, #233d43 72%);
+  box-shadow: 0 0 0 3px #f6e2bc46, 0 5px 12px #2d4c60aa, inset 0 1px #ffedc158;
 }
 
 .day__button[aria-current="date"] {
@@ -305,37 +298,6 @@ button { font: inherit; }
 .day--end .day__button { width: 3.8rem; height: 3.8rem; }
 .day--end .day__number { font-size: 1.65rem; }
 
-.fir {
-  position: absolute;
-  width: 6.4rem;
-  height: 8rem;
-  left: 50%;
-  bottom: 1.25rem;
-  transform: translateX(-50%);
-  pointer-events: none;
-  background:
-    radial-gradient(circle at 49% 33%, #f9d38c 0 1.5px, transparent 3px),
-    radial-gradient(circle at 37% 48%, #f9d38c 0 1.5px, transparent 3px),
-    radial-gradient(circle at 63% 57%, #f9d38c 0 1.5px, transparent 3px),
-    radial-gradient(circle at 30% 67%, #f9d38c 0 2px, transparent 4px),
-    radial-gradient(circle at 55% 72%, #f9d38c 0 2px, transparent 4px),
-    linear-gradient(120deg, #778f9c, #275249 42%, #183d3c 88%);
-  clip-path: polygon(50% 4%, 71% 34%, 63% 34%, 83% 55%, 73% 55%, 97% 78%, 56% 78%, 56% 92%, 44% 92%, 44% 78%, 3% 78%, 27% 55%, 17% 55%, 37% 34%, 29% 34%);
-}
-
-.day--end::before {
-  content: "✦";
-  position: absolute;
-  left: 50%;
-  bottom: 8.5rem;
-  transform: translateX(-50%);
-  color: #ffe2a0;
-  font-size: 1.4rem;
-  text-shadow: 0 0 14px #f6c979;
-}
-
-.finish { display: flex; justify-content: center; align-items: center; gap: 0.8rem; color: var(--gold); }
-.finish span { width: 2rem; height: 1px; background: #f4cc866b; }
 
 .gift-dialog {
   width: min(calc(100% - 2rem), 25rem);
@@ -492,19 +454,16 @@ body:has(.gift-dialog[open]) { overflow: hidden; }
 }
 
 @media (max-width: 42rem) {
-  .forest { background-image: url("./assets/winter-forest-mobile.jpg"); }
-  .topbar { min-height: 3.8rem; padding-block: 0.6rem; }
+  main::before {
+    background-image: radial-gradient(ellipse at 50% 27%, #101f3d7a 0%, transparent 75%), url("./assets/winter-forest-mobile.jpg");
+    background-position: center, center 34%;
+  }
+  .topbar { padding-block: 1.45rem; }
+  .topbar__details { top: 0.65rem; }
   .music-toggle { padding-inline: 0.55rem; }
   .music-toggle__label { display: none; }
-  .intro { padding-top: 3.4rem; }
   .day__button { width: 3rem; height: 3rem; }
   .day__number { font-size: 1.36rem; }
-}
-
-@media (max-width: 25rem) {
-  .topbar { padding-inline: 0.7rem; }
-  .wordmark { gap: 0.35rem; }
-  .preview-badge:not([hidden]) + .edition { display: none; }
 }
 
 @media (prefers-reduced-motion: reduce) {
