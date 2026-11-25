@@ -351,11 +351,11 @@ button { font: inherit; }
 }
 
 .gift-dialog::backdrop { background: #080e1abb; backdrop-filter: blur(5px); }
-.gift-dialog[open] { animation: gift-reveal 220ms ease-out; }
+.gift-dialog[open] { animation: gift-reveal 340ms cubic-bezier(0.2, 0.75, 0.25, 1) both; }
 body:has(.gift-dialog[open]) { overflow: hidden; }
 
 @keyframes gift-reveal {
-  from { opacity: 0; transform: translateY(0.6rem) scale(0.97); }
+  from { opacity: 0; transform: translateY(0.95rem) scale(0.945); }
   to { opacity: 1; transform: translateY(0) scale(1); }
 }
 
@@ -381,6 +381,8 @@ body:has(.gift-dialog[open]) { overflow: hidden; }
 
 .gift-dialog__art {
   position: relative;
+  isolation: isolate;
+  overflow: hidden;
   height: min(52vh, 19rem);
   display: grid;
   place-items: center;
@@ -389,11 +391,105 @@ body:has(.gift-dialog[open]) { overflow: hidden; }
 
 .gift-dialog__art img { width: 100%; height: 100%; min-height: 0; object-fit: contain; }
 .gift-dialog__art img[data-placeholder] { object-fit: cover; object-position: center 57%; }
+.gift-dialog[data-celebrate] .gift-dialog__art img { animation: unwrap-image 850ms ease-out both; }
+
+.gift-wrap, .gift-fireworks {
+  position: absolute;
+  inset: 0;
+  visibility: hidden;
+  pointer-events: none;
+}
+
+.gift-wrap {
+  display: grid;
+  place-items: center;
+  background: radial-gradient(ellipse at 50% 53%, #6a4b39, #1e2a43 38%, #101d32 68%);
+}
+
+.gift-fireworks { width: 100%; height: 100%; }
+.gift-dialog[data-celebrate] :is(.gift-wrap, .gift-fireworks) { visibility: visible; }
+.gift-dialog[data-celebrate] .gift-wrap { animation: unwrap-curtain 720ms ease-in-out both; }
+
+.present {
+  position: relative;
+  width: clamp(5.3rem, 25vw, 6.6rem);
+  height: 5.5rem;
+  margin-top: 1.2rem;
+}
+
+.present__box, .present__lid {
+  position: absolute;
+  background:
+    linear-gradient(90deg, transparent 42%, #ba8042 42%, #ffdc8f 49%, #e4ac60 57%, transparent 57%),
+    radial-gradient(circle, #e7b55975 1px, transparent 1.4px) 0 0 / 0.95rem 0.95rem,
+    linear-gradient(130deg, #aa4354, #732338 63%, #52182c);
+  border: 1px solid #f8ce8b68;
+}
+
+.present__box {
+  inset: 1.05rem 0.38rem 0;
+  border-radius: 0.18rem 0.18rem 0.5rem 0.5rem;
+  box-shadow: 0 0.55rem 1.6rem #091325a0, inset 0 -0.35rem #5b1d344d;
+}
+
+.present__lid {
+  inset: 0 0 auto;
+  height: 1.37rem;
+  border-radius: 0.32rem;
+  box-shadow: 0 0.25rem 0.45rem #41162f70;
+}
+
+.gift-dialog[data-celebrate] .present__box { animation: unwrap-box 710ms cubic-bezier(0.22, 0.7, 0.28, 1) both; }
+.gift-dialog[data-celebrate] .present__lid { animation: unwrap-lid 760ms cubic-bezier(0.2, 0.65, 0.22, 1) both; }
+
+.present__lid::before, .present__lid::after {
+  content: "";
+  position: absolute;
+  bottom: 100%;
+  width: 30%;
+  height: 0.95rem;
+  border: 0.22rem solid #f2c279;
+  border-radius: 55% 55% 36% 60%;
+  background: #ad6e3a54;
+}
+
+.present__lid::before { right: 49%; transform-origin: bottom right; transform: rotate(22deg); }
+.present__lid::after { left: 49%; transform-origin: bottom left; transform: rotate(-22deg); border-radius: 55% 55% 60% 36%; }
+
 .gift-dialog__art[hidden] + .gift-dialog__content { padding-top: 3.6rem; }
 .gift-dialog__content { padding: 1.25rem 1.3rem 1.65rem; }
+.gift-dialog[data-celebrate] .gift-dialog__content { animation: unwrap-caption 900ms ease-out both; }
 .gift-dialog__date { margin: 0 0 0.55rem; color: var(--gold); font-size: 0.875rem; }
 .gift-dialog__content h2 { margin: 0; font: 400 clamp(1.6rem, 6vw, 2.25rem)/1.12 Georgia, "Times New Roman", serif; overflow-wrap: anywhere; }
 #gift-message { margin: 0.75rem 0 0; color: var(--muted); }
+
+@keyframes unwrap-lid {
+  0%, 31% { opacity: 1; transform: translateY(0) rotate(0); }
+  44% { transform: translateY(0.15rem) rotate(-3deg); }
+  67% { opacity: 1; }
+  100% { opacity: 0; transform: translate(-0.75rem, -5.5rem) rotate(-22deg); }
+}
+
+@keyframes unwrap-box {
+  0%, 45% { opacity: 1; transform: scale(1); }
+  64% { opacity: 1; transform: translateY(0.15rem) scale(1.05, 0.95); }
+  100% { opacity: 0; transform: translateY(0.85rem) scale(0.82); }
+}
+
+@keyframes unwrap-curtain {
+  0%, 45% { opacity: 1; }
+  100% { opacity: 0; visibility: hidden; }
+}
+
+@keyframes unwrap-image {
+  0%, 35% { opacity: 0; transform: scale(1.07); }
+  100% { opacity: 1; transform: scale(1); }
+}
+
+@keyframes unwrap-caption {
+  0%, 53% { opacity: 0; transform: translateY(0.45rem); }
+  100% { opacity: 1; transform: translateY(0); }
+}
 
 @media (max-width: 42rem) {
   .forest { background-image: url("./assets/winter-forest-mobile.jpg"); }

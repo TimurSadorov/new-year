@@ -15,6 +15,8 @@ const giftImage = document.querySelector("#gift-image");
 const giftTitle = document.querySelector("#gift-title");
 const giftDate = document.querySelector("#gift-date");
 const giftMessage = document.querySelector("#gift-message");
+const fireworks = document.querySelector("#gift-fireworks");
+const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const positions = [
   50, 61, 72, 70, 59, 42, 29, 28, 38, 55, 69, 72, 60, 42, 28, 29,
@@ -40,6 +42,7 @@ let viewed = readViewedDays();
 let giftRequest;
 let selection = 0;
 let dateKey;
+let fireworksFrame = 0;
 
 document.querySelector("#edition").textContent = `Декабрь ${calendarYear}`;
 document.querySelector("#preview-badge").hidden = !preview;
@@ -247,11 +250,12 @@ async function openDay(day) {
     return;
   }
 
+  showDialog(day, gift.name, "", gift.image || placeholderImage, !viewed.has(day));
   markViewed(day);
-  showDialog(day, gift.name, "", gift.image || placeholderImage);
 }
 
-function showDialog(day, title, message, image) {
+function showDialog(day, title, message, image, firstOpening = false) {
+  stopGiftCelebration();
   giftDate.textContent = `${day} декабря`;
   giftTitle.textContent = title;
   giftMessage.textContent = message;
@@ -263,13 +267,98 @@ function showDialog(day, title, message, image) {
   } else {
     giftImage.removeAttribute("src");
   }
+  const celebrate = firstOpening && !reducedMotion.matches;
+  dialog.toggleAttribute("data-celebrate", celebrate);
   if (!dialog.open) dialog.showModal();
+  if (celebrate) playGiftFireworks();
+}
+
+function stopGiftCelebration() {
+  cancelAnimationFrame(fireworksFrame);
+  dialog.removeAttribute("data-celebrate");
+  fireworks.width = 0;
+}
+
+function playGiftFireworks() {
+  const width = fireworks.clientWidth;
+  const height = fireworks.clientHeight;
+  const context = fireworks.getContext("2d");
+  if (!context || !width || !height) return;
+
+  const ratio = Math.min(window.devicePixelRatio || 1, 2);
+  fireworks.width = Math.round(width * ratio);
+  fireworks.height = Math.round(height * ratio);
+  context.scale(ratio, ratio);
+  context.lineCap = "round";
+  context.globalCompositeOperation = "lighter";
+
+  const bursts = [
+    { x: 0.50, y: 0.40, delay: 370, reach: 0.34, colors: ["#fff5d0", "#ffcb76", "#ff9d58"] },
+    { x: 0.24, y: 0.49, delay: 560, reach: 0.23, colors: ["#fff0dc", "#ffc3d2", "#ffb767"] },
+    { x: 0.77, y: 0.40, delay: 700, reach: 0.24, colors: ["#fff3cb", "#afe0ff", "#ffd583"] },
+  ].map((burst) => ({
+    ...burst,
+    sparks: Array.from({ length: 26 }, (_, index) => {
+      const angle = (index + Math.random() * 0.72) / 26 * Math.PI * 2;
+      const distance = Math.min(width, height) * burst.reach * (0.45 + Math.random() * 0.55);
+      return {
+        dx: Math.cos(angle) * distance,
+        dy: Math.sin(angle) * distance,
+        size: 0.85 + Math.random() * 1.25,
+        color: burst.colors[index % burst.colors.length],
+      };
+    }),
+  }));
+
+  const start = performance.now();
+  const lifetime = 980;
+
+  function draw(now) {
+    const elapsed = now - start;
+    context.clearRect(0, 0, width, height);
+
+    for (const burst of bursts) {
+      const age = (elapsed - burst.delay) / lifetime;
+      if (age < 0 || age >= 1) continue;
+
+      const centerX = width * burst.x;
+      const centerY = height * burst.y;
+      const spread = 1 - (1 - age) ** 2.35;
+      const tailAge = Math.max(0, age - 0.12);
+      const tailSpread = 1 - (1 - tailAge) ** 2.35;
+      const fade = (1 - age) ** 1.4;
+
+      for (const spark of burst.sparks) {
+        const x = centerX + spark.dx * spread;
+        const y = centerY + spark.dy * spread + 26 * age ** 2;
+        context.globalAlpha = 0.58 * fade;
+        context.strokeStyle = spark.color;
+        context.lineWidth = spark.size;
+        context.beginPath();
+        context.moveTo(centerX + spark.dx * tailSpread, centerY + spark.dy * tailSpread + 26 * tailAge ** 2);
+        context.lineTo(x, y);
+        context.stroke();
+
+        context.globalAlpha = fade;
+        context.fillStyle = spark.color;
+        context.beginPath();
+        context.arc(x, y, spark.size, 0, Math.PI * 2);
+        context.fill();
+      }
+    }
+
+    if (elapsed < bursts.at(-1).delay + lifetime) fireworksFrame = requestAnimationFrame(draw);
+    else stopGiftCelebration();
+  }
+
+  fireworksFrame = requestAnimationFrame(draw);
 }
 
 giftImage.addEventListener("error", () => {
   if (giftArt.hidden) return;
   if (giftImage.hasAttribute("data-placeholder")) {
     giftArt.hidden = true;
+    stopGiftCelebration();
     return;
   }
   giftImage.setAttribute("data-placeholder", "");
@@ -277,6 +366,12 @@ giftImage.addEventListener("error", () => {
 });
 
 document.querySelector("#dismiss").addEventListener("click", () => dialog.close());
+dialog.addEventListener("close", () => {
+  if (!dialog.open) stopGiftCelebration();
+});
+reducedMotion.addEventListener("change", (event) => {
+  if (event.matches) stopGiftCelebration();
+});
 dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;
   const bounds = dialog.getBoundingClientRect();
