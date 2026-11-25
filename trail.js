@@ -26,8 +26,19 @@ const woodland = ["grove", "grove", "pine", "grove", "grove", "pine", "drift", "
 
 export function mountTrail(track, days) {
   const canvas = track.querySelector("#track-path");
-  const scenery = track.querySelector("#scenery");
+  const landscape = track.querySelector("#scenery");
+  const lights = track.querySelector("#scenery-lights");
   let previousWidth = 0;
+  let geometry;
+  let images;
+
+  function renderLandscapes() {
+    if (!images || !geometry) return;
+    const { route, last, width, height, halfWidth, phone } = geometry;
+    const landmarks = placeLandmarks(route, last, width, height, halfWidth, phone);
+    paintWoodland(landscape, route, landmarks, images, width, height, halfWidth, phone);
+    addLights(lights, landmarks);
+  }
 
   function layout() {
     const width = track.clientWidth;
@@ -54,11 +65,16 @@ export function mountTrail(track, days) {
       caption.classList.toggle("day__caption--left", x > width * 0.54 || index === waypoints.length - 1);
     });
     paintSnowPath(canvas, route, width, height, halfWidth);
-    plantScenery(scenery, route, last, width, height, halfWidth, phone);
+    geometry = { route, last, width, height, halfWidth, phone };
+    renderLandscapes();
   }
 
   layout();
   new ResizeObserver(layout).observe(track);
+  loadLandscape().then((assets) => {
+    images = assets;
+    renderLandscapes();
+  });
 }
 
 function randomSequence(seed) {
@@ -108,14 +124,19 @@ function sampleRoute(points) {
   });
 }
 
-function paintSnowPath(canvas, route, width, height, halfWidth) {
+function prepareSurface(canvas, width, height) {
   // Limit the backing surface for long pages and high-density mobile screens.
   const scale = Math.min(window.devicePixelRatio || 1, 1.6, 4000 / Math.max(width, height), Math.sqrt(9e6 / (width * height)));
   canvas.width = Math.round(width * scale);
   canvas.height = Math.round(height * scale);
   const context = canvas.getContext("2d");
+  context?.setTransform(scale, 0, 0, scale, 0, 0);
+  return { context, scale };
+}
+
+function paintSnowPath(canvas, route, width, height, halfWidth) {
+  const { context, scale } = prepareSurface(canvas, width, height);
   if (!context) return;
-  context.setTransform(scale, 0, 0, scale, 0, 0);
 
   const end = route.at(-1).distance;
   // Overlapping circles give the banks soft bends, including the hairpin turns.
@@ -185,32 +206,14 @@ function paintSnowPath(canvas, route, width, height, halfWidth) {
   }
 }
 
-function plantScenery(container, route, finish, width, height, halfWidth, phone) {
+function placeLandmarks(route, finish, width, height, halfWidth, phone) {
   const random = randomSequence(311226);
-  const pieces = document.createDocumentFragment();
+  const pieces = [];
   const finishX = width * (phone ? 0.76 : 0.73);
   const finishY = finish.y - (phone ? 46 : 64);
   const columns = Math.max(3, Math.round(width / (phone ? 100 : 148)));
   const rowHeight = phone ? 100 : 133;
   const cottages = [];
-  let counter = 0;
-
-  function addPiece(kind, x, y, size, mirror) {
-    const decoration = document.createElement("span");
-    decoration.className = `decoration decoration--${kind}`;
-    decoration.style.left = `${x}px`;
-    decoration.style.top = `${y}px`;
-    decoration.style.setProperty("--piece-size", `${size}px`);
-    decoration.style.setProperty("--mirror", mirror ? -1 : 1);
-    decoration.style.setProperty("--glow-delay", `${-counter++ * 0.57}s`);
-
-    const image = document.createElement("img");
-    image.src = `./assets/trail-${kind}.png`;
-    image.alt = "";
-    image.decoding = "async";
-    decoration.append(image);
-    pieces.append(decoration);
-  }
 
   for (let y = 76; y < height - 12; y += rowHeight) {
     for (let column = 0; column < columns; column++) {
@@ -224,10 +227,154 @@ function plantScenery(container, route, finish, width, height, halfWidth, phone)
       const onPath = route.some((point) => (point.x - x) ** 2 + (point.y - spotY) ** 2 < clearance ** 2);
       if (onPath || Math.hypot(x - finishX, spotY - finishY) < (phone ? 116 : 188)) continue;
       if (kind === "cottage") cottages.push({ x, y: spotY });
-      addPiece(kind, x, spotY, size, mirror);
+      pieces.push({ kind, x, y: spotY, size, mirror });
     }
   }
 
-  addPiece("finale", finishX, finishY, scenerySizes.finale[phone ? 1 : 0], false);
-  container.replaceChildren(pieces);
+  pieces.push({ kind: "finale", x: finishX, y: finishY, size: scenerySizes.finale[phone ? 1 : 0], mirror: false });
+  return pieces.sort((a, b) => a.y - b.y);
+}
+
+async function loadLandscape() {
+  const sources = [
+    ["woodland", "./assets/woodland.jpg"],
+    ...Object.keys(scenerySizes).map((kind) => [kind, `./assets/trail-${kind}.png`]),
+  ];
+  const images = await Promise.all(sources.map(async ([kind, source]) => {
+    const image = new Image();
+    image.src = source;
+    try {
+      await image.decode();
+      return [kind, kind === "woodland" ? image : softenSnowBase(image)];
+    } catch {
+      return [kind, null];
+    }
+  }));
+  return Object.fromEntries(images);
+}
+
+function softenSnowBase(image) {
+  const sprite = document.createElement("canvas");
+  sprite.width = image.naturalWidth;
+  sprite.height = image.naturalHeight;
+  const context = sprite.getContext("2d");
+  if (!context) return image;
+
+  context.drawImage(image, 0, 0);
+  context.globalCompositeOperation = "destination-in";
+  const snow = context.createLinearGradient(0, 0, 0, sprite.height);
+  snow.addColorStop(0, "#000");
+  snow.addColorStop(0.62, "#000");
+  snow.addColorStop(0.86, "#000c");
+  snow.addColorStop(1, "transparent");
+  context.fillStyle = snow;
+  context.fillRect(0, 0, sprite.width, sprite.height);
+  return sprite;
+}
+
+function paintWoodland(canvas, route, landmarks, images, width, height, halfWidth, phone) {
+  const { context, scale } = prepareSurface(canvas, width, height);
+  if (!context) return;
+
+  function groundPatch(x, y, radiusX, radiusY, color) {
+    context.save();
+    context.translate(x, y);
+    context.scale(radiusX, radiusY);
+    const shade = context.createRadialGradient(0, 0, 0, 0, 0, 1);
+    shade.addColorStop(0, color);
+    shade.addColorStop(1, "transparent");
+    context.fillStyle = shade;
+    context.fillRect(-1, -1, 2, 2);
+    context.restore();
+  }
+
+  if (images.woodland) {
+    for (const { kind, x, y, size } of landmarks) {
+      if (kind === "grove" || kind === "pine") groundPatch(x, y + size * 0.06, size * 1.04, size * 0.75, "#000d");
+    }
+    const edgeWidth = Math.min(235, width * 0.25);
+    for (let y = 90; y < height; y += 255) {
+      groundPatch(0, y, edgeWidth, 195, "#000d");
+      groundPatch(width, y + 120, edgeWidth, 210, "#000d");
+    }
+
+    context.globalCompositeOperation = "source-in";
+    const tile = context.createPattern(images.woodland, "repeat");
+    const tileScale = (phone ? 350 : 560) / images.woodland.width;
+    tile.setTransform(new DOMMatrix().scale(tileScale));
+    context.fillStyle = tile;
+    context.fillRect(0, 0, width, height);
+
+    // The continuous forest recedes around the snowy route and its clearings.
+    context.globalCompositeOperation = "destination-out";
+    context.beginPath();
+    context.moveTo(route[0].x, route[0].y);
+    for (const point of route) context.lineTo(point.x, point.y);
+    context.lineCap = "round";
+    context.lineJoin = "round";
+    context.strokeStyle = "#000b";
+    context.lineWidth = halfWidth * 2.48;
+    context.shadowColor = "#0007";
+    context.shadowBlur = 18 * scale;
+    context.stroke();
+    context.shadowBlur = 0;
+    context.lineWidth = halfWidth * 2.02;
+    context.strokeStyle = "#000";
+    context.stroke();
+    for (const { kind, x, y, size } of landmarks) {
+      if (kind === "cottage" || kind === "finale") groundPatch(x, y, size * 0.78, size * 0.69, "#000f");
+    }
+    context.globalCompositeOperation = "source-over";
+  }
+
+  for (const { kind, x, y, size } of landmarks) {
+    if (kind !== "cottage" || !images.cottage) continue;
+    let nearest = route[0];
+    let distance = Infinity;
+    for (const point of route) {
+      const fromDoor = Math.hypot(x - point.x, y + size * 0.25 - point.y);
+      if (fromDoor < distance) {
+        nearest = point;
+        distance = fromDoor;
+      }
+    }
+    if (distance > (phone ? 150 : 258)) continue;
+    context.beginPath();
+    context.moveTo(x, y + size * 0.25);
+    context.quadraticCurveTo(x + (nearest.x - x) * 0.37, nearest.y + 32, nearest.x, nearest.y);
+    context.lineCap = "round";
+    context.lineWidth = phone ? 19 : 34;
+    context.strokeStyle = "#bbd0df58";
+    context.shadowColor = "#b9d1e258";
+    context.shadowBlur = 9 * scale;
+    context.stroke();
+    context.shadowBlur = 0;
+  }
+
+  for (const { kind, x, y, size, mirror } of landmarks) {
+    const image = images[kind];
+    if (!image) continue;
+    const imageHeight = size * image.height / image.width;
+    groundPatch(x - size * 0.08, y + imageHeight * 0.26, size * 0.47, imageHeight * 0.19, "#0a1b31ad");
+    groundPatch(x, y + imageHeight * 0.28, size * 0.32, imageHeight * 0.11, "#a3bad382");
+    context.save();
+    context.translate(x, y);
+    if (mirror) context.scale(-1, 1);
+    context.drawImage(image, -size / 2, -imageHeight * 0.6, size, imageHeight);
+    context.restore();
+  }
+}
+
+function addLights(container, landmarks) {
+  const lights = document.createDocumentFragment();
+  landmarks.forEach(({ kind, x, y, size }, index) => {
+    if (kind !== "cottage" && kind !== "lantern" && kind !== "finale") return;
+    const light = document.createElement("span");
+    light.style.left = `${x}px`;
+    light.style.top = `${y + size * 0.28}px`;
+    light.style.setProperty("--pool-width", `${size * 1.65}px`);
+    light.style.setProperty("--glow-delay", `${-index * 0.57}s`);
+    lights.append(light);
+  });
+  container.replaceChildren(lights);
 }

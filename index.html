@@ -12,6 +12,7 @@
   <script src="./atmosphere.js" defer></script>
 </head>
 <body id="top">
+  <div class="window-frost" id="window-frost" aria-hidden="true"></div>
   <canvas class="snowfall" id="snowfall" aria-hidden="true"></canvas>
   <audio id="winter-music" src="./assets/winter-waltz.m4a" preload="none" loop></audio>
 
@@ -38,7 +39,8 @@
 
     <section class="calendar" id="trail" aria-label="Дни декабря">
       <div class="track" id="track">
-        <div class="track__scenery" id="scenery" aria-hidden="true"></div>
+        <canvas class="track__scenery" id="scenery" aria-hidden="true"></canvas>
+        <div class="track__lights" id="scenery-lights" aria-hidden="true"></div>
         <canvas class="track__path" id="track-path" aria-hidden="true"></canvas>
         <ol class="track__days" id="days" aria-label="31 день декабря"></ol>
       </div>

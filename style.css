@@ -9,6 +9,40 @@
   color: var(--cream);
 }
 
+:root[data-time="dawn"] {
+  --hero-wide: url("./assets/dawn-wide.jpg");
+  --hero-phone: url("./assets/dawn-phone.jpg");
+  --hero-veil: radial-gradient(ellipse at 50% 23%, #f4e5ef40, transparent 64%);
+  --hero-phone-focus: 76%;
+  --intro-ink: #211f38;
+  --intro-muted: #302941;
+  --intro-accent: #694335;
+  --intro-hover: #452f38;
+  --intro-shadow: 0 1px 12px #fbe3d5b8, 0 0 8px #f4e6ee94;
+  --terrain-filter: brightness(1.45) saturate(0.68);
+  --terrain-wash: radial-gradient(ellipse at 80% 17%, #f6c8a57a, transparent 62%), linear-gradient(150deg, #e2b4b74d, #c7c1e230, #f2c9b948);
+  --scene-objects: brightness(1.27) saturate(0.86) sepia(0.09);
+  --path-light: brightness(1.08) sepia(0.14);
+  --light-strength: 0.63;
+}
+
+:root[data-time="day"] {
+  --hero-wide: url("./assets/day-wide.jpg");
+  --hero-phone: url("./assets/day-phone.jpg");
+  --hero-veil: radial-gradient(ellipse at 49% 25%, #e9f6ff55, transparent 72%);
+  --hero-phone-focus: 65%;
+  --intro-ink: #172e43;
+  --intro-muted: #244359;
+  --intro-accent: #3e5143;
+  --intro-hover: #172e43;
+  --intro-shadow: 0 1px 12px #f5fcffca, 0 0 8px #f5fcffab;
+  --terrain-filter: brightness(1.98) saturate(0.54);
+  --terrain-wash: radial-gradient(ellipse at 79% 15%, #fff0b970, transparent 67%), linear-gradient(165deg, #e7f1f04d, #bbdfef48, #e1f1f145);
+  --scene-objects: brightness(1.55) saturate(0.74);
+  --path-light: brightness(1.14) saturate(0.7);
+  --light-strength: 0.33;
+}
+
 *, *::before, *::after { box-sizing: border-box; }
 [hidden] { display: none !important; }
 body { margin: 0; min-width: 280px; }
@@ -17,13 +51,26 @@ a { color: inherit; }
 button { font: inherit; }
 :focus-visible { outline: 2px solid var(--gold); outline-offset: 5px; }
 
-.snowfall {
+.snowfall, .window-frost {
   position: fixed;
   inset: 0;
   z-index: 2;
   width: 100%;
   height: 100%;
   pointer-events: none;
+}
+
+.window-frost { display: none; overflow: hidden; }
+:root[data-time="dawn"] .window-frost { display: block; }
+
+.window-frost span {
+  position: absolute;
+  width: clamp(3.9rem, var(--frost-size), 13.5rem);
+  aspect-ratio: 1;
+  opacity: var(--frost-strength);
+  background: url("./assets/window-frost.png") center / contain no-repeat;
+  filter: drop-shadow(0 1px 2px #3e659288);
+  transform: translate(-50%, -50%) rotate(var(--frost-tilt));
 }
 
 .topbar {
@@ -43,7 +90,7 @@ button { font: inherit; }
   gap: 0.65rem;
 }
 
-.edition { font-size: 0.875rem; color: var(--muted); white-space: nowrap; text-shadow: 0 1px 8px var(--night); }
+.edition { font-size: 0.875rem; color: var(--intro-ink, var(--muted)); white-space: nowrap; text-shadow: var(--intro-shadow, 0 1px 8px var(--night)); }
 
 .music-toggle {
   min-width: 2.75rem;
@@ -107,6 +154,7 @@ main {
   display: block;
   height: max(100vw, 42rem, 640px);
   background: url("./assets/snowfield.jpg") center / max(100vw, 42rem, 640px) 100% no-repeat;
+  filter: var(--terrain-filter, none);
 }
 
 .terrain span:nth-child(even) { transform: scaleY(-1); }
@@ -115,10 +163,10 @@ main {
   content: "";
   position: absolute;
   inset: 0;
-  background:
+  background: var(--terrain-wash,
     radial-gradient(ellipse at 77% 93%, #a177433d, transparent 31%),
     radial-gradient(ellipse at 9% 51%, #43657037, transparent 36%),
-    linear-gradient(90deg, #0e223964, #24435714 50%, #10243564);
+    linear-gradient(90deg, #0e223964, #24435714 50%, #10243564));
 }
 
 main::before {
@@ -127,9 +175,10 @@ main::before {
   z-index: -1;
   inset: 0 0 auto;
   height: clamp(28rem, 48vw, 46rem);
-  background:
-    radial-gradient(ellipse at 50% 30%, #0e203b78 0%, transparent 68%),
-    url("./assets/winter-forest.jpg") center 28% / cover;
+  background-image: var(--hero-veil, radial-gradient(ellipse at 50% 30%, #0e203b78 0%, transparent 68%)),
+    var(--hero-wide, url("./assets/winter-forest.jpg"));
+  background-position: center, center 28%;
+  background-size: cover;
   mask-image: linear-gradient(#000 0 41%, transparent 100%);
 }
 
@@ -140,7 +189,8 @@ main::before {
   justify-items: center;
   padding: clamp(6.1rem, 10vw, 9rem) 1.15rem 0.95rem;
   text-align: center;
-  text-shadow: 0 2px 24px #102137, 0 2px 6px #102137ad;
+  color: var(--intro-ink, var(--cream));
+  text-shadow: var(--intro-shadow, 0 2px 24px #102137, 0 2px 6px #102137ad);
 }
 
 .intro h1 {
@@ -153,53 +203,38 @@ main::before {
   text-wrap: balance;
 }
 
-.intro h1 em { color: #f7dfb9; font-weight: 400; }
-.intro__status { margin: 0.85rem 0 0.12rem; color: #e3ebf3; max-width: 36ch; }
+.intro h1 em { color: var(--intro-accent, #f7dfb9); font-weight: 400; }
+.intro__status { margin: 0.85rem 0 0.12rem; color: var(--intro-muted, #e3ebf3); max-width: 36ch; }
 
 .trail-link {
   min-height: 2.75rem;
   display: inline-grid;
   place-items: center;
   padding-inline: 0.6rem;
-  color: #f7dfb9;
-  text-decoration-color: #f7dfb977;
+  color: var(--intro-accent, #f7dfb9);
   text-underline-offset: 0.3em;
   transition: color 160ms ease;
 }
 
-.trail-link:hover { color: #fff7e8; }
+.trail-link:hover { color: var(--intro-hover, #fff7e8); }
 
 .calendar { scroll-margin-top: 0.8rem; }
 
 .track { position: relative; }
-.track__scenery, .track__path, .track__days { position: absolute; inset: 0; width: 100%; height: 100%; }
-.track__scenery { pointer-events: none; }
-.track__path { pointer-events: none; mask-image: linear-gradient(transparent, #000 68px); }
+.track__scenery, .track__lights, .track__path, .track__days { position: absolute; inset: 0; width: 100%; height: 100%; }
+.track__scenery { pointer-events: none; mask-image: linear-gradient(transparent, #000 96px); filter: var(--scene-objects, none); }
+.track__path { pointer-events: none; mask-image: linear-gradient(transparent, #000 68px); filter: var(--path-light, none); }
 .track__days { list-style: none; margin: 0; padding: 0; }
 .day { position: absolute; transform: translate(-50%, -50%); scroll-margin-top: 6rem; }
 
-.decoration {
+.track__lights { pointer-events: none; opacity: var(--light-strength, 1); }
+
+.track__lights span {
   position: absolute;
-  width: var(--piece-size);
-  transform: translate(-50%, -60%);
-}
-
-.decoration img {
-  position: relative;
-  display: block;
-  width: 100%;
-  height: auto;
-  transform: scaleX(var(--mirror, 1));
-  filter: drop-shadow(0 0.38rem 0.5rem #142438a8);
-}
-
-.decoration--grove img { filter: brightness(0.87) saturate(0.86) drop-shadow(0 0.55rem 0.7rem #0e233998); }
-
-.decoration--lantern::before, .decoration--cottage::before, .decoration--finale::before {
-  content: "";
-  position: absolute;
-  inset: 0 -55% -10%;
-  background: radial-gradient(ellipse, #ffd79755 0%, #ffb0581f 37%, transparent 68%);
+  width: var(--pool-width);
+  aspect-ratio: 2;
+  transform: translate(-50%, -50%) rotate(-9deg);
+  background: radial-gradient(ellipse, #ffd79b64, #ffbd681e 43%, transparent 68%);
   animation: lantern-glow 4.8s ease-in-out infinite alternate;
   animation-delay: var(--glow-delay, 0s);
 }
@@ -216,13 +251,26 @@ main::before {
   display: grid;
   place-items: center;
   padding: 0;
-  border: 1px solid #a3b6d0a6;
-  border-radius: 50%;
-  background: linear-gradient(145deg, #324968, #17273e 65%);
-  box-shadow: 0 0 0 4px #10203870, 0 6px 12px #060d1cb0, inset 0 1px #ffffff32;
+  isolation: isolate;
+  border: 1px solid #91a6b18c;
+  border-radius: 46% 51% 49% 47%;
+  background: linear-gradient(155deg, #3d4c63, #1c2d3f 73%);
+  box-shadow: 0 4px 0 #5a7484a1, 0 8px 12px #12243669, inset 0 1px #ffffff35;
   color: var(--cream);
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease;
+}
+
+.day__button::before {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: -2px 7px auto;
+  height: 7px;
+  border-radius: 64% 66% 44% 56%;
+  transform: rotate(-7deg);
+  background: linear-gradient(#e9f1f5, #bed3dfc2 62%, #a1b9ca30);
+  box-shadow: 0 1px 4px #eef8fc3b;
 }
 
 .day__button:hover { transform: scale(1.1); border-color: var(--cream); }
@@ -230,9 +278,9 @@ main::before {
 .day__number { font: 400 1.48rem/1 Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; }
 
 .day__button[data-open="true"] {
-  border-color: #f5d6a1;
-  background: linear-gradient(145deg, #426357, #233d43 72%);
-  box-shadow: 0 0 0 3px #f6e2bc46, 0 5px 12px #2d4c60aa, inset 0 1px #ffedc158;
+  border-color: #acb09e9c;
+  background: linear-gradient(150deg, #49645a, #253b3a 72%);
+  box-shadow: 0 4px 0 #718082ae, 0 8px 12px #2d4c6095, inset 0 1px #ffedc148;
 }
 
 .day__button[aria-current="date"] {
@@ -455,8 +503,9 @@ body:has(.gift-dialog[open]) { overflow: hidden; }
 
 @media (max-width: 42rem) {
   main::before {
-    background-image: radial-gradient(ellipse at 50% 27%, #101f3d7a 0%, transparent 75%), url("./assets/winter-forest-mobile.jpg");
-    background-position: center, center 34%;
+    background-image: var(--hero-veil, radial-gradient(ellipse at 50% 27%, #101f3d7a 0%, transparent 75%)),
+      var(--hero-phone, url("./assets/winter-forest-mobile.jpg"));
+    background-position: center, center var(--hero-phone-focus, 34%);
   }
   .topbar { padding-block: 1.45rem; }
   .topbar__details { top: 0.65rem; }

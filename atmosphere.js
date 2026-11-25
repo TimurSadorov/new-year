@@ -1,3 +1,56 @@
+function setUpTimeOfDay() {
+  const root = document.documentElement;
+  const frost = document.querySelector("#window-frost");
+  const params = new URLSearchParams(location.search);
+  const requestedTime = params.get("time");
+  const previewTime = params.get("preview") === "1" && ["dawn", "day", "night"].includes(requestedTime)
+    ? requestedTime
+    : null;
+  let timer;
+
+  function updateTimeOfDay() {
+    const now = new Date();
+    const hour = now.getHours();
+    const timeOfDay = previewTime ?? (hour < 6 || hour >= 17 ? "night" : hour < 11 ? "dawn" : "day");
+
+    if (root.dataset.time !== timeOfDay) {
+      root.dataset.time = timeOfDay;
+      if (timeOfDay === "dawn" && !frost.childElementCount) addFrostPatches(frost);
+    }
+
+    if (previewTime) return;
+    const next = new Date(now);
+    next.setHours(hour < 6 ? 6 : hour < 11 ? 11 : hour < 17 ? 17 : 30, 0, 0, 0);
+    clearTimeout(timer);
+    timer = setTimeout(updateTimeOfDay, Math.min(next - now, 60_000));
+  }
+
+  updateTimeOfDay();
+  window.addEventListener("focus", updateTimeOfDay);
+  document.addEventListener("visibilitychange", () => {
+    if (!document.hidden) updateTimeOfDay();
+  });
+}
+
+function addFrostPatches(container) {
+  const zones = [
+    [3, 11, 24, 41], [87, 97, 22, 38],
+    [2, 15, 66, 86], [86, 99, 62, 83],
+    [29, 55, 92, 102],
+  ];
+  const between = (from, to) => from + Math.random() * (to - from);
+
+  for (const [left, right, top, bottom] of zones) {
+    const patch = document.createElement("span");
+    patch.style.left = `${between(left, right)}%`;
+    patch.style.top = `${between(top, bottom)}%`;
+    patch.style.setProperty("--frost-size", `${between(17, 26)}vmin`);
+    patch.style.setProperty("--frost-tilt", `${between(-140, 140)}deg`);
+    patch.style.setProperty("--frost-strength", between(0.61, 0.88));
+    container.append(patch);
+  }
+}
+
 function setUpSnow() {
   const canvas = document.querySelector("#snowfall");
   const context = canvas.getContext("2d");
@@ -19,18 +72,20 @@ function setUpSnow() {
     canvas.width = Math.round(width * scale);
     canvas.height = Math.round(height * scale);
     context.setTransform(scale, 0, 0, scale, 0, 0);
-    context.fillStyle = "#f2f8ff";
+    context.fillStyle = "#f6faff";
+    context.strokeStyle = "#52738f";
+    context.lineWidth = 0.5;
 
-    const count = Math.min(132, Math.max(42, Math.round(width * height / 10500)));
+    const count = Math.min(320, Math.max(96, Math.round(width * height / 4500)));
     flakes = Array.from({ length: count }, () => {
       const depth = Math.random() ** 2;
       return {
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: 0.65 + depth * 2.2,
-        speed: 14 + depth * 44,
-        drift: 3 + depth * 13,
-        opacity: 0.24 + depth * 0.58,
+        radius: 0.72 + depth * 2.45,
+        speed: 17 + depth * 49,
+        drift: 3 + depth * 16,
+        opacity: 0.26 + depth * 0.62,
         phase: Math.random() * Math.PI * 2,
       };
     });
@@ -40,6 +95,7 @@ function setUpSnow() {
   function draw(seconds) {
     elapsed += seconds;
     context.clearRect(0, 0, width, height);
+    const daylight = document.documentElement.dataset.time !== "night";
     for (const flake of flakes) {
       flake.x += (flake.drift + 7 * Math.sin(elapsed * 1.25 + flake.phase)) * seconds;
       flake.y += flake.speed * seconds;
@@ -51,6 +107,10 @@ function setUpSnow() {
       context.beginPath();
       context.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
       context.fill();
+      if (daylight && flake.radius > 1.6) {
+        context.globalAlpha = flake.opacity * 0.43;
+        context.stroke();
+      }
     }
   }
 
@@ -119,5 +179,6 @@ function setUpMusic() {
   start();
 }
 
+setUpTimeOfDay();
 setUpSnow();
 setUpMusic();
