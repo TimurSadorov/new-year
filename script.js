@@ -365,6 +365,21 @@ dialog.addEventListener("click", (event) => {
   }
 });
 
+trailLink.addEventListener("click", (event) => {
+  if (reducedMotion.matches || event.defaultPrevented || event.button !== 0
+      || event.altKey || event.ctrlKey || event.metaKey || event.shiftKey) return;
+
+  const { hash } = trailLink;
+  if (!hash.startsWith("#day-")) return;
+  const target = document.getElementById(hash.slice(1));
+  if (!target) return;
+
+  event.preventDefault();
+  if (location.hash !== hash) history.pushState(null, "", hash);
+  target.querySelector("button")?.focus({ preventScroll: true });
+  target.scrollIntoView({ behavior: "smooth" });
+});
+
 window.addEventListener("storage", (event) => {
   if (event.key !== viewedKey && event.key !== null) return;
   viewed = readViewedDays();
