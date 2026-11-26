@@ -144,8 +144,8 @@ function setUpMusic() {
   const preferenceKey = "sweet-december:music";
   const recordings = {
     dawn: "./assets/morning-snow.m4a?v=2",
-    day: "./assets/sunlit-path.m4a?v=2",
-    night: "./assets/evening-jingle.m4a",
+    day: "./assets/holiday-swing.m4a",
+    night: "./assets/warm-light.m4a",
   };
   let enabled = true;
 
