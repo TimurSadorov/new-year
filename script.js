@@ -1,5 +1,5 @@
 import { mountTrail } from "./trail.js?v=4";
-import { prepareGiftSalute, playGiftSalute, stopGiftSalute } from "./gift-salute.js";
+import { prepareGiftSalute, playGiftSalute, stopGiftSalute } from "./gift-salute.js?v=2";
 
 const calendarYear = 2026;
 const dayCount = 31;
