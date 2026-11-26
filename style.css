@@ -227,6 +227,11 @@ main::before {
 .track__progress { pointer-events: none; mask-image: linear-gradient(transparent, #000 68px); }
 .track__days { list-style: none; margin: 0; padding: 0; }
 .day { position: absolute; transform: translate(-50%, -50%); scroll-margin-top: 6rem; }
+.day:nth-child(5n + 1) { --bulb-color: #ff8589; }
+.day:nth-child(5n + 2) { --bulb-color: #ffd17e; }
+.day:nth-child(5n + 3) { --bulb-color: #78e7ae; }
+.day:nth-child(5n + 4) { --bulb-color: #7dcbff; }
+.day:nth-child(5n + 5) { --bulb-color: #cba4ff; }
 
 .track__lights { pointer-events: none; opacity: var(--light-strength, 1); }
 
@@ -253,10 +258,11 @@ main::before {
   place-items: center;
   padding: 0;
   isolation: isolate;
-  border: 1px solid #91a6b18c;
-  border-radius: 46% 51% 49% 47%;
-  background: linear-gradient(155deg, #3d4c63, #1c2d3f 73%);
-  box-shadow: 0 4px 0 #5a7484a1, 0 8px 12px #12243669, inset 0 1px #ffffff35;
+  border: 1px solid color-mix(in srgb, var(--bulb-color) 44%, #243145);
+  border-radius: 48% 48% 51% 51%;
+  background: radial-gradient(circle at 33% 23%, color-mix(in srgb, var(--bulb-color) 30%, #25344b),
+    color-mix(in srgb, var(--bulb-color) 13%, #182438) 58%, #142031 93%);
+  box-shadow: 0 4px 8px #0a142971, inset 0 1px #ffffff30;
   color: var(--cream);
   cursor: pointer;
   transition: transform 160ms ease, border-color 160ms ease;
@@ -266,12 +272,16 @@ main::before {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: -2px 7px auto;
-  height: 7px;
-  border-radius: 64% 66% 44% 56%;
-  transform: rotate(-7deg);
-  background: linear-gradient(#e9f1f5, #bed3dfc2 62%, #a1b9ca30);
-  box-shadow: 0 1px 4px #eef8fc3b;
+  top: -0.45rem;
+  left: 50%;
+  width: 1.04rem;
+  height: 0.52rem;
+  transform: translateX(-50%);
+  border: 1px solid #5f7778;
+  border-radius: 0.22rem 0.22rem 0.12rem 0.12rem;
+  background: linear-gradient(90deg, #213538, #5a7574 39%, #2b4446 72%, #1b2e34);
+  box-shadow: 0 1px 2px #10202896;
+  pointer-events: none;
 }
 
 .day__button:hover { transform: scale(1.1); border-color: var(--cream); }
@@ -279,15 +289,29 @@ main::before {
 .day__number { font: 400 1.48rem/1 Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; }
 
 .day__button[data-open="true"] {
-  border-color: #acb09e9c;
-  background: linear-gradient(150deg, #49645a, #253b3a 72%);
-  box-shadow: 0 4px 0 #718082ae, 0 8px 12px #2d4c6095, inset 0 1px #ffedc148;
+  border-color: color-mix(in srgb, var(--bulb-color), #fff8e3);
+  background: radial-gradient(circle at 33% 23%, #fff9e8, color-mix(in srgb, var(--bulb-color), white 31%) 37%,
+    var(--bulb-color) 69%, color-mix(in srgb, var(--bulb-color), #20233d 23%) 100%);
+  box-shadow: 0 0 13px color-mix(in srgb, var(--bulb-color) 76%, transparent),
+    0 4px 9px #101b34a0, inset 0 1px #fff8e7b3;
+  color: #192238;
 }
 
-.day__button:is([data-next], [data-open="true"][aria-current="date"]) {
-  color: #21182a;
-  background: linear-gradient(145deg, #fff3c7, #e9b565);
-  box-shadow: 0 0 0 5px #f4cc8659, 0 0 32px #e2ab5e9e, 0 6px 12px #060d1cb0;
+.day__button[data-next]::after {
+  content: "";
+  position: absolute;
+  z-index: -2;
+  inset: -5px;
+  border: 2px solid color-mix(in srgb, var(--bulb-color), #fff9e8 45%);
+  border-radius: 50%;
+  box-shadow: 0 0 22px 5px color-mix(in srgb, var(--bulb-color) 82%, transparent);
+  pointer-events: none;
+  animation: bulb-glow 2s ease-in-out infinite alternate;
+}
+
+@keyframes bulb-glow {
+  from { opacity: 0.6; transform: scale(0.98); }
+  to { opacity: 1; transform: scale(1.13); }
 }
 
 .day__mark {

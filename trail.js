@@ -36,9 +36,9 @@ export function mountTrail(track, days) {
 
   function renderProgress() {
     if (!geometry) return;
-    const { route, dayStops, width, height, halfWidth } = geometry;
+    const { route, dayStops, width, height, halfWidth, sockets } = geometry;
     const goldenEnd = openedThrough ? dayStops[openedThrough - 1] : 0;
-    paintTrailLights(progress, route, width, height, halfWidth, goldenEnd);
+    paintTrailProgress(progress, route, width, height, halfWidth, goldenEnd, sockets);
   }
 
   function renderLandscapes() {
@@ -73,8 +73,12 @@ export function mountTrail(track, days) {
       node.style.top = `${y}px`;
       caption.classList.toggle("day__caption--left", x > width * 0.54 || index === waypoints.length - 1);
     });
+    const sockets = days.map(({ node }, index) => ({
+      x: waypoints[index].x,
+      y: waypoints[index].y - node.offsetHeight / 2,
+    }));
     paintSnowPath(canvas, route, width, height, halfWidth);
-    geometry = { route, dayStops, last, width, height, halfWidth, phone };
+    geometry = { route, dayStops, last, width, height, halfWidth, phone, sockets };
     renderLandscapes();
     renderProgress();
   }
@@ -157,7 +161,7 @@ function prepareSurface(canvas, width, height) {
   return { context, scale };
 }
 
-function paintTrailLights(canvas, route, width, height, halfWidth, goldenEnd) {
+function paintTrailProgress(canvas, route, width, height, halfWidth, goldenEnd, sockets) {
   const { context, scale } = prepareSurface(canvas, width, height);
   if (!context) return;
   context.lineCap = "round";
@@ -187,6 +191,26 @@ function paintTrailLights(canvas, route, width, height, halfWidth, goldenEnd) {
       light(layer, "#ffda9223", "transparent", 0);
     }
   }
+
+  context.shadowBlur = 0;
+  paintGarlandCord(context, sockets);
+}
+
+function paintGarlandCord(context, sockets) {
+  context.beginPath();
+  context.moveTo(sockets[0].x, sockets[0].y);
+  for (let index = 1; index < sockets.length; index++) {
+    const previous = sockets[index - 1];
+    const next = sockets[index];
+    const sag = Math.min(22, Math.abs(next.x - previous.x) * 0.12);
+    context.quadraticCurveTo((previous.x + next.x) / 2, (previous.y + next.y) / 2 + sag, next.x, next.y);
+  }
+  context.lineWidth = 3.6;
+  context.strokeStyle = "#e1f0ed54";
+  context.stroke();
+  context.lineWidth = 1.8;
+  context.strokeStyle = "#213e40c9";
+  context.stroke();
 }
 
 function paintSnowPath(canvas, route, width, height, halfWidth) {
