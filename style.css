@@ -280,6 +280,7 @@ main::before {
 .day:nth-child(5n + 3) { --bulb-color: #8fc6a7; }
 .day:nth-child(5n + 4) { --bulb-color: #94bad4; }
 .day:nth-child(5n + 5) { --bulb-color: #baa6cf; }
+.day.day--end { --bulb-color: #e3ae6e; }
 
 .track__lights { pointer-events: none; opacity: var(--light-strength, 1); }
 
@@ -478,8 +479,28 @@ main::before {
 
 .day__caption--left { left: auto; right: calc(100% + 0.8rem); }
 
-.day--end .day__button { width: 3.35rem; height: 3.35rem; }
-.day--end .day__number { font-size: 1.49rem; }
+.day--end .day__button { width: 4.15rem; height: 4.15rem; border-width: 2px; }
+
+.day--end .day__button::before {
+  top: -0.56rem;
+  width: 1.3rem;
+  height: 0.64rem;
+  border-color: #c6a970b0;
+  background: linear-gradient(90deg, #654b2e, #c5a575 38%, #98733f 68%, #644a2b);
+}
+
+.day--end .day__button::after {
+  content: "";
+  position: absolute;
+  z-index: -1;
+  inset: 4px;
+  border: 1px solid #c6a970a0;
+  border-radius: inherit;
+  pointer-events: none;
+}
+
+.day--end .day__button[data-open="true"]::after { border-color: #fff1c9c0; }
+.day--end .day__number { font-size: 1.75rem; }
 .day--end .day__caption { position: static; transform: none; }
 
 .day__finale {
@@ -495,7 +516,7 @@ main::before {
 
 .day__finale-title {
   color: #ffedc9;
-  font: 400 clamp(2rem, 6vw, 3.55rem)/1 Georgia, "Times New Roman", serif;
+  font: 400 clamp(1.5rem, 4vw, 2.3rem)/1 Georgia, "Times New Roman", serif;
   letter-spacing: -0.035em;
   text-shadow: 0 2px 6px #142237, 0 0 19px #cf915eb0;
 }
