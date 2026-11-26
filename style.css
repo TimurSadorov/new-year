@@ -282,7 +282,7 @@ main::before {
 .day:nth-child(5n + 5) { --bulb-color: #baa6cf; }
 .day.day--end { --bulb-color: #e3ae6e; }
 
-.track__lights { pointer-events: none; opacity: var(--light-strength, 1); }
+.track__lights { overflow: clip; pointer-events: none; opacity: var(--light-strength, 1); }
 
 .track__lights span {
   position: absolute;
@@ -384,6 +384,7 @@ main::before {
 @media (hover: hover) {
   .day__button:hover { border-color: color-mix(in srgb, var(--bulb-color), var(--cream)); }
   .day__button[data-open="true"]:hover { filter: brightness(1.12); }
+  .day--end .day__button:hover::before { background: #f4d99d; }
 }
 
 .day__mark {
@@ -452,7 +453,8 @@ main::before {
   pointer-events: none;
 }
 
-.day:not(.day--end):has(> .day__button:is([data-next], [data-upcoming])) .day__caption {
+.day--end .day__caption,
+.day:has(> .day__button:is([data-next], [data-upcoming])) .day__caption {
   inset: calc(100% + 0.4rem) auto auto 50%;
   transform: translateX(-50%);
 }
@@ -479,42 +481,49 @@ main::before {
 
 .day__caption--left { left: auto; right: calc(100% + 0.8rem); }
 
-.day--end .day__button { width: 4.15rem; height: 4.15rem; border-width: 2px; }
-
-.day--end .day__button::before {
-  top: -0.56rem;
-  width: 1.3rem;
-  height: 0.64rem;
-  border-color: #c6a970b0;
-  background: linear-gradient(90deg, #654b2e, #c5a575 38%, #98733f 68%, #644a2b);
+.day--end .day__button {
+  --star-shape: polygon(50% 0%, 62% 35%, 99% 36%, 70% 58%, 81% 96%, 50% 74%, 19% 96%, 30% 58%, 1% 36%, 38% 35%);
+  --star-edge: linear-gradient(148deg, #bba171, #6e5340);
+  --star-face: radial-gradient(circle at 40% 28%, #615038, #332e31 55%, #172638 93%);
+  width: clamp(4rem, 8vw, 4.65rem);
+  height: clamp(4rem, 8vw, 4.65rem);
+  border: 0;
+  background: none;
+  box-shadow: none;
 }
 
-.day--end .day__button::after {
+.day--end .day__button[data-open="true"] {
+  --star-edge: linear-gradient(148deg, #fff1bc, #bd7b36);
+  --star-face: radial-gradient(circle at 40% 30%, #fff5d5, #ecc273 58%, #c18a42 94%);
+}
+
+.day--end .day__button::before, .day--end .day__button::after {
   content: "";
   position: absolute;
   z-index: -1;
-  inset: 4px;
-  border: 1px solid #c6a970a0;
-  border-radius: inherit;
+  width: auto;
+  height: auto;
+  border: 0;
+  border-radius: 0;
+  box-shadow: none;
+  transform: none;
+  clip-path: var(--star-shape);
   pointer-events: none;
 }
 
-.day--end .day__button[data-open="true"]::after { border-color: #fff1c9c0; }
-.day--end .day__number { font-size: 1.75rem; }
-.day--end .day__caption { position: static; transform: none; }
-
-.day__finale {
-  position: absolute;
-  inset: calc(100% + 0.4rem) auto auto 50%;
-  transform: translateX(-50%);
-  display: grid;
-  justify-items: center;
-  gap: 0.6rem;
-  white-space: nowrap;
-  pointer-events: none;
-}
+.day--end .day__button::before { inset: 0; background: var(--star-edge); }
+.day--end .day__button::after { inset: 4px; background: var(--star-face); }
+.day--end .day__number { font-size: 1.55rem; }
+.day--end .day__mark { right: 0.05rem; bottom: 0.1rem; }
+.day--end .day__mark--next { display: none; }
 
 .day__finale-title {
+  position: absolute;
+  top: calc(50% + var(--finale-tree-depth) + 0.35rem);
+  left: 50%;
+  transform: translateX(-50%);
+  white-space: nowrap;
+  pointer-events: none;
   color: #ffedc9;
   font: 400 clamp(1.5rem, 4vw, 2.3rem)/1 Georgia, "Times New Roman", serif;
   letter-spacing: -0.035em;

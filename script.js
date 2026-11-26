@@ -1,4 +1,4 @@
-import { mountTrail } from "./trail.js?v=3";
+import { mountTrail } from "./trail.js?v=4";
 
 const calendarYear = 2026;
 const dayCount = 31;
@@ -51,17 +51,12 @@ const days = Array.from({ length: dayCount }, (_, index) => {
   const caption = document.createElement("span");
   caption.className = "day__caption";
   caption.setAttribute("aria-hidden", "true");
-  node.append(button);
+  node.append(button, caption);
   if (day === dayCount) {
-    const finale = document.createElement("div");
-    finale.className = "day__finale";
     const title = document.createElement("span");
     title.className = "day__finale-title";
     title.textContent = "Новый год";
-    finale.append(caption, title);
-    node.append(finale);
-  } else {
-    node.append(caption);
+    node.append(title);
   }
   daysList.append(node);
   return { node, button, mark, caption };

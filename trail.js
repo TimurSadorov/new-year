@@ -2,14 +2,14 @@ const desktopRoute = [
   [47, 78], [66, 121], [83, 214], [86, 335], [71, 421], [52, 471], [29, 500], [14, 595],
   [17, 723], [34, 814], [56, 824], [76, 868], [89, 976], [78, 1081], [57, 1150], [34, 1170],
   [17, 1256], [11, 1373], [26, 1465], [47, 1505], [65, 1571], [86, 1685], [82, 1809],
-  [66, 1867], [45, 1885], [25, 1980], [13, 2101], [24, 2225], [46, 2260], [69, 2323], [60, 2508],
+  [66, 1867], [45, 1885], [25, 1980], [13, 2101], [24, 2225], [46, 2260], [69, 2323], [50, 2508],
 ];
 
 const mobileRoute = [
   [48, 62], [70, 132], [82, 237], [73, 340], [50, 393], [27, 453], [17, 557], [23, 665],
   [47, 723], [72, 783], [82, 891], [76, 986], [51, 1044], [28, 1094], [16, 1204], [24, 1304],
   [48, 1355], [72, 1425], [83, 1535], [70, 1645], [44, 1690], [20, 1770], [16, 1878],
-  [34, 1973], [59, 2038], [80, 2118], [75, 2223], [51, 2313], [27, 2371], [23, 2483], [51, 2632],
+  [34, 1973], [59, 2038], [80, 2118], [75, 2223], [51, 2313], [27, 2371], [23, 2483], [50, 2632],
 ];
 
 // Desktop and mobile sizes in CSS pixels for the decor on the map.
@@ -20,8 +20,9 @@ const scenerySizes = {
   drift: [123, 77],
   lantern: [82, 54],
   parcels: [89, 62],
-  finale: [370, 228],
+  finale: [520, 320],
 };
+const finaleArtwork = { width: 472, height: 576, trimTop: 60 };
 const woodland = ["grove", "grove", "pine", "grove", "grove", "pine", "drift", "grove", "lantern", "grove", "cottage", "parcels"];
 
 export function mountTrail(track, days) {
@@ -34,8 +35,8 @@ export function mountTrail(track, days) {
 
   function renderLandscapes() {
     if (!images || !geometry) return;
-    const { waypoints, width, height, phone } = geometry;
-    const landmarks = placeLandmarks(waypoints, width, height, phone);
+    const { waypoints, finale, width, height, phone } = geometry;
+    const landmarks = placeLandmarks(waypoints, finale, width, height, phone);
     paintWoodland(landscape, landmarks, images, width, height, phone);
     addLights(lights, landmarks);
   }
@@ -47,9 +48,17 @@ export function mountTrail(track, days) {
 
     const phone = width < 700;
     const waypoints = (phone ? mobileRoute : desktopRoute).map(([x, y]) => ({ x: width * x / 100, y }));
-    const height = waypoints.at(-1).y + (phone ? 152 : 175);
+    const star = waypoints.at(-1);
+    const size = Math.min(scenerySizes.finale[phone ? 1 : 0], width - 32);
+    const treeScale = size / finaleArtwork.width;
+    const treeHeight = finaleArtwork.height * treeScale;
+    const treeTop = star.y + 14 - finaleArtwork.trimTop * treeScale;
+    const treeBottom = treeTop + treeHeight;
+    const finale = { kind: "finale", x: star.x, y: treeTop + treeHeight * 0.6, size, mirror: false };
+    const height = treeBottom + (phone ? 72 : 88);
 
     track.style.height = `${height}px`;
+    days.at(-1).node.style.setProperty("--finale-tree-depth", `${treeBottom - star.y}px`);
     days.forEach(({ node, caption }, index) => {
       const { x, y } = waypoints[index];
       node.style.left = `${x}px`;
@@ -60,8 +69,9 @@ export function mountTrail(track, days) {
       x: waypoints[index].x,
       y: waypoints[index].y - node.offsetHeight / 2,
     }));
+    sockets[sockets.length - 1] = star;
     paintGarlandCord(cord, sockets, width, height);
-    geometry = { waypoints, width, height, phone };
+    geometry = { waypoints, finale, width, height, phone };
     renderLandscapes();
   }
 
@@ -116,12 +126,9 @@ function paintGarlandCord(canvas, sockets, width, height) {
   context.stroke();
 }
 
-function placeLandmarks(waypoints, width, height, phone) {
+function placeLandmarks(waypoints, finale, width, height, phone) {
   const random = randomSequence(311226);
   const pieces = [];
-  const finaleSize = Math.min(scenerySizes.finale[phone ? 1 : 0], width * (phone ? 0.78 : 0.48));
-  const finishX = Math.min(width * (phone ? 0.76 : 0.73), width - finaleSize / 2 - 12);
-  const finishY = waypoints.at(-1).y - (20 + finaleSize * (phone ? 0.39 : 0.29));
   const columns = Math.max(3, Math.round(width / (phone ? 100 : 148)));
   const rowHeight = phone ? 100 : 133;
   const cottages = [];
@@ -136,13 +143,13 @@ function placeLandmarks(waypoints, width, height, phone) {
       const mirror = random() > 0.5;
       const clearance = (phone ? 16 : 21) + size * 0.29;
       const nearBulb = waypoints.some((point) => (point.x - x) ** 2 + (point.y - spotY) ** 2 < clearance ** 2);
-      if (nearBulb || Math.hypot(x - finishX, spotY - finishY) < finaleSize * 0.68) continue;
+      if (nearBulb || Math.hypot(x - finale.x, spotY - finale.y) < finale.size * 0.68) continue;
       if (kind === "cottage") cottages.push({ x, y: spotY });
       pieces.push({ kind, x, y: spotY, size, mirror });
     }
   }
 
-  pieces.push({ kind: "finale", x: finishX, y: finishY, size: finaleSize, mirror: false });
+  pieces.push(finale);
   return pieces.sort((a, b) => a.y - b.y);
 }
 
@@ -156,7 +163,9 @@ async function loadLandscape() {
     image.src = source;
     try {
       await image.decode();
-      return [kind, kind === "woodland" ? image : softenSnowBase(image)];
+      // The interactive star takes the place of the one in the tree artwork.
+      const trimTop = kind === "finale" ? finaleArtwork.trimTop : 0;
+      return [kind, kind === "woodland" ? image : softenSnowBase(image, trimTop)];
     } catch {
       return [kind, null];
     }
@@ -164,7 +173,7 @@ async function loadLandscape() {
   return Object.fromEntries(images);
 }
 
-function softenSnowBase(image) {
+function softenSnowBase(image, trimTop) {
   const sprite = document.createElement("canvas");
   sprite.width = image.naturalWidth;
   sprite.height = image.naturalHeight;
@@ -172,6 +181,7 @@ function softenSnowBase(image) {
   if (!context) return image;
 
   context.drawImage(image, 0, 0);
+  if (trimTop) context.clearRect(0, 0, sprite.width, trimTop);
   context.globalCompositeOperation = "destination-in";
   const snow = context.createLinearGradient(0, 0, 0, sprite.height);
   snow.addColorStop(0, "#000");
