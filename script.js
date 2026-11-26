@@ -22,7 +22,7 @@ const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 let viewed = readViewedDays();
 let giftRequest;
 let selection = 0;
-let dateKey;
+let renderedDate;
 let fireworksFrame = 0;
 
 document.querySelector("#edition").textContent = `Декабрь ${calendarYear}`;
@@ -80,54 +80,68 @@ function currentDate() {
   const now = new Date();
   const start = new Date(calendarYear, 11, 1);
   const end = new Date(calendarYear + 1, 0, 1);
+  const followingDate = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 1);
   const today = now >= start && now < end ? now.getDate() : null;
-  const available = now >= end ? dayCount : (today ?? 0);
-  return { today, available: preview ? dayCount : available };
+  const tomorrow = followingDate >= start && followingDate < end ? followingDate.getDate() : null;
+  const available = preview || now >= end ? dayCount : (today ?? 0);
+  return { today, tomorrow, available, dateKey: now.toDateString() };
 }
 
 function calendarProgress() {
-  const { today, available } = currentDate();
+  const date = currentDate();
   let completed = 0;
-  while (completed < available && viewed.has(completed + 1)) completed++;
-  const nextDay = completed < available ? completed + 1 : null;
-  return { today, available, completed, nextDay };
+  while (completed < date.available && viewed.has(completed + 1)) completed++;
+  const nextDay = completed < date.available ? completed + 1 : null;
+  const upcomingDay = !nextDay && completed < dayCount ? completed + 1 : null;
+  return { ...date, completed, nextDay, upcomingDay };
+}
+
+function openingTime(day, tomorrow) {
+  return day === tomorrow ? "завтра" : `${day} декабря`;
 }
 
 function refreshDays() {
-  const { today, available, completed, nextDay } = calendarProgress();
-  dateKey = `${today}:${available}`;
+  const { today, tomorrow, available, dateKey, completed, nextDay, upcomingDay } = calendarProgress();
+  renderedDate = dateKey;
 
   days.forEach(({ button, mark, caption }, index) => {
     const day = index + 1;
     const seen = day <= completed;
-    const open = seen || day === nextDay;
+    const ready = day === nextDay;
+    const upcoming = day === upcomingDay;
+    const open = seen || ready;
     button.dataset.open = String(open);
-    button.toggleAttribute("data-next", day === nextDay);
-    button.setAttribute("aria-label", `${day} декабря, ${!open ? "подарок закрыт" : seen ? "подарок просмотрен" : "открыть подарок"}`);
+    button.toggleAttribute("data-next", ready);
+    button.toggleAttribute("data-upcoming", upcoming);
     if (day === today) button.setAttribute("aria-current", "date");
     else button.removeAttribute("aria-current");
 
-    mark.hidden = open && !seen;
-    mark.className = `day__mark${seen ? " day__mark--viewed" : open ? "" : " day__mark--locked"}`;
-    mark.textContent = seen ? "✓" : "";
+    mark.className = `day__mark ${seen ? "day__mark--viewed" : ready ? "day__mark--next" : "day__mark--locked"}`;
+    mark.textContent = seen ? "✓" : ready ? "✦" : "";
 
-    caption.textContent = day === today ? "Сегодня" : day === dayCount ? "Новый год" : day === nextDay ? "Следующий" : "";
+    const opening = upcoming ? `Откроется ${openingTime(day, tomorrow)}` : null;
+    const giftState = seen ? "подарок просмотрен" : ready ? "открыть подарок" : "подарок закрыт";
+    button.setAttribute("aria-label", opening ? `${day} декабря. ${opening}` : `${day} декабря, ${giftState}`);
+    caption.textContent = opening ?? (ready ? "Можно открыть" : day === today ? "Сегодня" : day === dayCount ? "Новый год" : "");
     caption.hidden = !caption.textContent;
   });
 
-  if (!available) status.textContent = `Первый подарок откроется 1 декабря ${calendarYear} года.`;
-  else if (completed === dayCount) status.textContent = "Все подарки открыты.";
+  if (!available) {
+    status.textContent = tomorrow === 1
+      ? "Первый подарок откроется завтра."
+      : `Первый подарок откроется 1 декабря ${calendarYear} года.`;
+  } else if (completed === dayCount) status.textContent = "Все подарки открыты.";
   else if (nextDay) status.textContent = `Открывай по порядку. Дальше — ${nextDay} декабря.`;
-  else status.textContent = "Все доступные подарки открыты.";
+  else status.textContent = `Следующий подарок откроется ${openingTime(upcomingDay, tomorrow)}.`;
 
-  const jumpToNext = nextDay && nextDay > 1;
+  const nextStop = nextDay ?? upcomingDay;
+  const jumpToNext = nextStop > 1;
   trailLink.textContent = jumpToNext ? "К следующему подарку" : "К календарю";
-  trailLink.href = jumpToNext ? `#day-${nextDay}` : "#trail";
+  trailLink.href = jumpToNext ? `#day-${nextStop}` : "#trail";
 }
 
 function checkDate() {
-  const { today, available } = currentDate();
-  if (`${today}:${available}` !== dateKey) refreshDays();
+  if (new Date().toDateString() !== renderedDate) refreshDays();
 }
 
 function loadGifts() {
@@ -166,9 +180,9 @@ async function openDay(day) {
 }
 
 function showLockedDay(day) {
-  const { available, completed, nextDay } = calendarProgress();
+  const { available, completed, nextDay, tomorrow } = calendarProgress();
   const message = day > available
-    ? `Откроется ${day} декабря.`
+    ? `Откроется ${openingTime(day, tomorrow)}.`
     : day > completed && day !== nextDay ? `Сначала открой подарок за ${nextDay} декабря.` : null;
   if (!message) return false;
   showDialog(day, "Подарок пока закрыт", message);
@@ -313,8 +327,8 @@ document.addEventListener("visibilitychange", checkDate);
 window.setInterval(checkDate, 30_000);
 
 refreshDays();
-const { today, nextDay } = calendarProgress();
-const firstStop = nextDay ?? today;
+const { today, nextDay, upcomingDay } = calendarProgress();
+const firstStop = nextDay ?? upcomingDay ?? today;
 if (!preview && firstStop > 1 && !location.hash) {
   window.addEventListener("load", () => {
     if (window.scrollY === 0) days[firstStop - 1].node.scrollIntoView({ block: "center" });

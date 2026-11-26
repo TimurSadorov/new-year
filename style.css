@@ -255,22 +255,26 @@ main::before {
   z-index: -1;
   inset: -2.65rem -3.25rem -3.65rem;
   background:
-    radial-gradient(ellipse 42% 40% at 50% 43%, color-mix(in srgb, var(--bulb-color) 73%, transparent),
-      color-mix(in srgb, var(--bulb-color) 36%, transparent) 42%, transparent 100%),
-    radial-gradient(ellipse 47% 23% at 51% 64%, color-mix(in srgb, var(--bulb-color) 30%, transparent), transparent 100%);
+    radial-gradient(ellipse 42% 40% at 50% 43%, color-mix(in srgb, var(--glow-color, var(--bulb-color)) 73%, transparent),
+      color-mix(in srgb, var(--glow-color, var(--bulb-color)) 36%, transparent) 42%, transparent 100%),
+    radial-gradient(ellipse 47% 23% at 51% 64%, color-mix(in srgb, var(--glow-color, var(--bulb-color)) 30%, transparent), transparent 100%);
   opacity: calc(var(--bulb-light, 0.85) * 0.67);
   pointer-events: none;
 }
 
+.day:has(> .day__button:is([data-next], [data-upcoming])) { z-index: 1; }
+
 .day:has(> .day__button[data-next])::before {
-  opacity: var(--bulb-light, 0.85);
-  transform: scale(1.13);
+  --glow-color: color-mix(in srgb, var(--bulb-color), #ffe8b4 45%);
+  --next-glow: calc(0.25 + var(--bulb-light, 0.85) * 0.75);
+  opacity: var(--next-glow);
+  transform: scale(1.23);
   animation: bulb-glow 2.4s ease-in-out infinite alternate;
 }
 
 @keyframes bulb-glow {
-  from { opacity: calc(var(--bulb-light, 0.85) * 0.77); transform: scale(1.03); }
-  to { opacity: var(--bulb-light, 0.85); transform: scale(1.24); }
+  from { opacity: calc(var(--next-glow) * 0.73); transform: scale(1.08); }
+  to { opacity: var(--next-glow); transform: scale(1.34); }
 }
 
 .day__button {
@@ -321,6 +325,13 @@ main::before {
   color: #192238;
 }
 
+.day__button[data-next] {
+  border-color: color-mix(in srgb, var(--bulb-color), #fff1c9 55%);
+  box-shadow: 0 3px 6px #0b182961, 0 0 14px #ffd78b54, inset 0 0 5px #fff3d482;
+}
+
+.day__button[data-upcoming] { border-color: #c8af80b8; }
+
 .day__mark {
   position: absolute;
   right: -0.35rem;
@@ -361,6 +372,20 @@ main::before {
 
 .day__mark--viewed { background: #2d5048; color: #ecf5e3; border-color: #9fb8a594; }
 
+.day__mark--next {
+  top: -0.32rem;
+  right: -0.42rem;
+  bottom: auto;
+  border: 0;
+  background: none;
+  color: #fff4ce;
+  font-size: 1.3rem;
+  font-weight: 400;
+  text-shadow: 0 0 7px #f9c477dc;
+}
+
+.day__button[data-upcoming] .day__mark { color: #f1ddb5; border-color: #c8af80b8; }
+
 .day__caption {
   position: absolute;
   left: calc(100% + 0.8rem);
@@ -371,6 +396,16 @@ main::before {
   text-shadow: 0 1px 8px #0b1627, 0 1px 3px #0b1627;
   white-space: nowrap;
   pointer-events: none;
+}
+
+.day:has(> .day__button:is([data-next], [data-upcoming])) .day__caption {
+  width: max-content;
+  max-width: calc(50vw - 3.4rem);
+  padding: 0.25rem 0.5rem;
+  border-radius: 0.4rem;
+  background: #152539e8;
+  line-height: 1.25;
+  white-space: normal;
 }
 
 .day__caption--left { left: auto; right: calc(100% + 0.8rem); }
