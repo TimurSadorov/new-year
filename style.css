@@ -485,8 +485,8 @@ main::before {
   --star-shape: polygon(50% 0%, 62% 35%, 99% 36%, 70% 58%, 81% 96%, 50% 74%, 19% 96%, 30% 58%, 1% 36%, 38% 35%);
   --star-edge: linear-gradient(148deg, #bba171, #6e5340);
   --star-face: radial-gradient(circle at 40% 28%, #615038, #332e31 55%, #172638 93%);
-  width: clamp(4rem, 8vw, 4.65rem);
-  height: clamp(4rem, 8vw, 4.65rem);
+  width: clamp(4.5rem, 9vw, 5.25rem);
+  height: clamp(4.5rem, 9vw, 5.25rem);
   border: 0;
   background: none;
   box-shadow: none;
