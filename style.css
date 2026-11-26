@@ -64,7 +64,7 @@ button { font: inherit; }
 
 .window-frost {
   overflow: hidden;
-  opacity: var(--frost-opacity, 0.72);
+  opacity: var(--frost-opacity, 0.92);
   mix-blend-mode: screen;
   background:
     radial-gradient(ellipse at 0 100%, #d1e8f866, #bdd9ee26 29%, transparent 70%) bottom left / 36% 45% no-repeat,
@@ -73,7 +73,20 @@ button { font: inherit; }
     linear-gradient(0deg, #c4deec1b, transparent 4%, transparent 98%, #c4deec14);
 }
 
-.window-frost::before, .window-frost::after {
+.window-frost__night {
+  position: absolute;
+  inset: 0;
+  background:
+    radial-gradient(ellipse farthest-side at 0 0, #c6e4f788, #b6d9f13b 46%, transparent 94%) top left / 43% 48% no-repeat,
+    radial-gradient(ellipse farthest-side at 100% 100%, #c6e4f799, #b6d9f139 46%, transparent 94%) bottom right / 47% 52% no-repeat,
+    linear-gradient(90deg, #c6e3f369, #acdaf124 3%, transparent 12%, transparent 88%, #acdaf11e 97%, #c6e3f35b),
+    linear-gradient(0deg, #d2e9fb77, #a4c9e52c 3%, transparent 14%, transparent 91%, #aacee828 98%, #c6e2f955);
+}
+
+:root:is([data-time="dawn"], [data-time="day"]) .window-frost__night { display: none; }
+
+.window-frost::before, .window-frost::after,
+.window-frost__night::before, .window-frost__night::after {
   content: "";
   position: absolute;
   aspect-ratio: 440 / 293;
@@ -93,6 +106,20 @@ button { font: inherit; }
   width: clamp(9rem, 23vw, 21rem);
   opacity: 0.9;
   transform: rotate(180deg);
+}
+
+.window-frost__night::before {
+  top: 0;
+  left: 0;
+  width: clamp(9rem, 25vw, 24rem);
+  transform: scaleY(-1);
+}
+
+.window-frost__night::after {
+  right: 0;
+  bottom: 0;
+  width: clamp(11rem, 30vw, 28rem);
+  transform: scaleX(-1);
 }
 
 .topbar {

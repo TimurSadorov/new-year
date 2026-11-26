@@ -145,7 +145,7 @@ function setUpMusic() {
   const recordings = {
     dawn: "./assets/morning-snow.m4a?v=2",
     day: "./assets/sunlit-path.m4a?v=2",
-    night: "./assets/evening-stillness.m4a",
+    night: "./assets/evening-jingle.m4a",
   };
   let enabled = true;
 
