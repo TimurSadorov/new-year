@@ -1,4 +1,4 @@
-import { mountTrail } from "./trail.js";
+import { mountTrail } from "./trail.js?v=2";
 
 const calendarYear = 2026;
 const dayCount = 31;
@@ -96,7 +96,6 @@ function calendarProgress() {
 function refreshDays() {
   const { today, available, completed, nextDay } = calendarProgress();
   dateKey = `${today}:${available}`;
-  setTrailProgress(completed);
 
   days.forEach(({ button, mark, caption }, index) => {
     const day = index + 1;
@@ -122,7 +121,7 @@ function refreshDays() {
   else status.textContent = "Все доступные подарки открыты.";
 
   const jumpToNext = nextDay && nextDay > 1;
-  trailLink.textContent = jumpToNext ? "К следующему подарку" : "На тропинку";
+  trailLink.textContent = jumpToNext ? "К следующему подарку" : "К календарю";
   trailLink.href = jumpToNext ? `#day-${nextDay}` : "#trail";
 }
 
@@ -308,7 +307,7 @@ window.addEventListener("storage", (event) => {
   refreshDays();
 });
 
-const setTrailProgress = mountTrail(track, days);
+mountTrail(track, days);
 window.addEventListener("focus", checkDate);
 document.addEventListener("visibilitychange", checkDate);
 window.setInterval(checkDate, 30_000);
