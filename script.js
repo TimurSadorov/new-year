@@ -20,6 +20,7 @@ const giftMessage = document.querySelector("#gift-message");
 const fireworks = document.querySelector("#gift-fireworks");
 const finaleOverlay = document.querySelector("#gift-finale");
 const finaleFireworks = document.querySelector("#finale-fireworks");
+const finaleGreeting = document.querySelector("#gift-finale-title");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
 
 const goldSparks = ["#fff5d0", "#ffcb76", "#ff9d58"];
@@ -235,12 +236,14 @@ function showDialog(day, title, message, image, firstOpening = false) {
   } else {
     giftImage.removeAttribute("src");
   }
-  const finale = firstOpening && day === dayCount;
+  const finalGift = day === dayCount && Boolean(image);
+  const finale = firstOpening && finalGift;
   const animate = firstOpening && !reducedMotion.matches;
   dialog.toggleAttribute("data-celebrate", animate && !finale);
   dialog.toggleAttribute("data-finale", finale);
   finaleOverlay.hidden = !finale;
-  if (finale) dialog.setAttribute("aria-labelledby", "gift-finale-title");
+  finaleGreeting.hidden = !finalGift;
+  dialog.setAttribute("aria-labelledby", finalGift ? "gift-finale-title gift-title" : "gift-title");
   if (!dialog.open) dialog.showModal();
 
   if (firstOpening) {
@@ -265,7 +268,6 @@ function stopGiftCelebration() {
   stopGiftAnimation();
   finaleOverlay.hidden = true;
   dialog.removeAttribute("data-finale");
-  dialog.setAttribute("aria-labelledby", "gift-title");
 }
 
 function playGiftFireworks(canvas, layout, lifetime, sparkCount) {
