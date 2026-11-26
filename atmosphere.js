@@ -1,6 +1,5 @@
 function setUpTimeOfDay() {
   const root = document.documentElement;
-  const frost = document.querySelector("#window-frost");
   const params = new URLSearchParams(location.search);
   const requestedTime = params.get("time");
   const previewTime = params.get("preview") === "1" && ["dawn", "day", "night"].includes(requestedTime)
@@ -15,7 +14,6 @@ function setUpTimeOfDay() {
 
     if (root.dataset.time !== timeOfDay) {
       root.dataset.time = timeOfDay;
-      if (timeOfDay === "night" && !frost.childElementCount) addFrostPatches(frost);
       document.dispatchEvent(new Event("winter-time-change"));
     }
 
@@ -31,25 +29,6 @@ function setUpTimeOfDay() {
   document.addEventListener("visibilitychange", () => {
     if (!document.hidden) updateTimeOfDay();
   });
-}
-
-function addFrostPatches(container) {
-  const zones = [
-    [3, 11, 24, 41], [87, 97, 22, 38],
-    [2, 15, 66, 86], [86, 99, 62, 83],
-    [29, 55, 92, 102],
-  ];
-  const between = (from, to) => from + Math.random() * (to - from);
-
-  for (const [left, right, top, bottom] of zones) {
-    const patch = document.createElement("span");
-    patch.style.left = `${between(left, right)}%`;
-    patch.style.top = `${between(top, bottom)}%`;
-    patch.style.setProperty("--frost-size", `${between(17, 26)}vmin`);
-    patch.style.setProperty("--frost-tilt", `${between(-140, 140)}deg`);
-    patch.style.setProperty("--frost-strength", between(0.61, 0.88));
-    container.append(patch);
-  }
 }
 
 function setUpSnow() {
@@ -166,7 +145,7 @@ function setUpMusic() {
   const recordings = {
     dawn: "./assets/morning-snow.m4a?v=2",
     day: "./assets/sunlit-path.m4a?v=2",
-    night: "./assets/winter-waltz.m4a?v=2",
+    night: "./assets/evening-stillness.m4a",
   };
   let enabled = true;
 

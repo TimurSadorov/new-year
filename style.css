@@ -23,6 +23,7 @@
   --terrain-wash: radial-gradient(ellipse at 80% 17%, #f6c8a57a, transparent 62%), linear-gradient(150deg, #e2b4b74d, #c7c1e230, #f2c9b948);
   --scene-objects: brightness(1.27) saturate(0.86) sepia(0.09);
   --bulb-light: 0.69;
+  --frost-opacity: 0.58;
   --light-strength: 0.63;
 }
 
@@ -40,6 +41,7 @@
   --terrain-wash: radial-gradient(ellipse at 79% 15%, #fff0b970, transparent 67%), linear-gradient(165deg, #e7f1f04d, #bbdfef48, #e1f1f145);
   --scene-objects: brightness(1.55) saturate(0.74);
   --bulb-light: 0.46;
+  --frost-opacity: 0.43;
   --light-strength: 0.33;
 }
 
@@ -60,17 +62,40 @@ button { font: inherit; }
   pointer-events: none;
 }
 
-.window-frost { display: none; overflow: hidden; }
-:root[data-time="night"] .window-frost { display: block; }
+.window-frost {
+  overflow: hidden;
+  opacity: var(--frost-opacity, 0.72);
+  mix-blend-mode: screen;
+  background:
+    radial-gradient(ellipse at 0 100%, #d1e8f866, #bdd9ee26 29%, transparent 70%) bottom left / 36% 45% no-repeat,
+    radial-gradient(ellipse at 100% 0, #c4e1f44d, #b3d7ee1f 32%, transparent 72%) top right / 31% 40% no-repeat,
+    linear-gradient(90deg, #c4deec24, transparent 3%, transparent 97%, #c4deec17),
+    linear-gradient(0deg, #c4deec1b, transparent 4%, transparent 98%, #c4deec14);
+}
 
-.window-frost span {
+.window-frost::before, .window-frost::after {
+  content: "";
   position: absolute;
-  width: clamp(3.9rem, var(--frost-size), 13.5rem);
-  aspect-ratio: 1;
-  opacity: var(--frost-strength);
-  background: url("./assets/window-frost.png") center / contain no-repeat;
-  filter: drop-shadow(0 1px 2px #3e659288);
-  transform: translate(-50%, -50%) rotate(var(--frost-tilt));
+  aspect-ratio: 440 / 293;
+  background: url("./assets/window-frost.png") center / 100% 100% no-repeat;
+  mask-image: linear-gradient(90deg, #000 10%, #000b 33%, #0004 55%, transparent 80%);
+  filter: saturate(0.65) blur(0.35px);
+}
+
+.window-frost::before {
+  left: -1.15rem;
+  bottom: -0.85rem;
+  width: clamp(11rem, 29vw, 27rem);
+  opacity: 0.64;
+  transform: rotate(-7deg);
+}
+
+.window-frost::after {
+  top: -1.25rem;
+  right: -1.35rem;
+  width: clamp(9rem, 23vw, 21rem);
+  opacity: 0.53;
+  transform: rotate(174deg);
 }
 
 .topbar {
