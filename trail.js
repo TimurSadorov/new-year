@@ -20,7 +20,7 @@ const scenerySizes = {
   drift: [123, 77],
   lantern: [82, 54],
   parcels: [89, 62],
-  finale: [250, 164],
+  finale: [370, 228],
 };
 const woodland = ["grove", "grove", "pine", "grove", "grove", "pine", "drift", "grove", "lantern", "grove", "cottage", "parcels"];
 
@@ -47,14 +47,14 @@ export function mountTrail(track, days) {
 
     const phone = width < 700;
     const waypoints = (phone ? mobileRoute : desktopRoute).map(([x, y]) => ({ x: width * x / 100, y }));
-    const height = waypoints.at(-1).y + (phone ? 108 : 140);
+    const height = waypoints.at(-1).y + (phone ? 152 : 175);
 
     track.style.height = `${height}px`;
     days.forEach(({ node, caption }, index) => {
       const { x, y } = waypoints[index];
       node.style.left = `${x}px`;
       node.style.top = `${y}px`;
-      caption.classList.toggle("day__caption--left", x > width * 0.54 || index === waypoints.length - 1);
+      caption.classList.toggle("day__caption--left", x > width * 0.54);
     });
     const sockets = days.map(({ node }, index) => ({
       x: waypoints[index].x,
@@ -119,8 +119,9 @@ function paintGarlandCord(canvas, sockets, width, height) {
 function placeLandmarks(waypoints, width, height, phone) {
   const random = randomSequence(311226);
   const pieces = [];
-  const finishX = width * (phone ? 0.76 : 0.73);
-  const finishY = waypoints.at(-1).y - (phone ? 46 : 64);
+  const finaleSize = Math.min(scenerySizes.finale[phone ? 1 : 0], width * (phone ? 0.78 : 0.48));
+  const finishX = Math.min(width * (phone ? 0.76 : 0.73), width - finaleSize / 2 - 12);
+  const finishY = waypoints.at(-1).y - (20 + finaleSize * (phone ? 0.39 : 0.29));
   const columns = Math.max(3, Math.round(width / (phone ? 100 : 148)));
   const rowHeight = phone ? 100 : 133;
   const cottages = [];
@@ -135,13 +136,13 @@ function placeLandmarks(waypoints, width, height, phone) {
       const mirror = random() > 0.5;
       const clearance = (phone ? 16 : 21) + size * 0.29;
       const nearBulb = waypoints.some((point) => (point.x - x) ** 2 + (point.y - spotY) ** 2 < clearance ** 2);
-      if (nearBulb || Math.hypot(x - finishX, spotY - finishY) < (phone ? 116 : 188)) continue;
+      if (nearBulb || Math.hypot(x - finishX, spotY - finishY) < finaleSize * 0.68) continue;
       if (kind === "cottage") cottages.push({ x, y: spotY });
       pieces.push({ kind, x, y: spotY, size, mirror });
     }
   }
 
-  pieces.push({ kind: "finale", x: finishX, y: finishY, size: scenerySizes.finale[phone ? 1 : 0], mirror: false });
+  pieces.push({ kind: "finale", x: finishX, y: finishY, size: finaleSize, mirror: false });
   return pieces.sort((a, b) => a.y - b.y);
 }
 

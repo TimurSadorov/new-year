@@ -1,4 +1,4 @@
-import { mountTrail } from "./trail.js?v=2";
+import { mountTrail } from "./trail.js?v=3";
 
 const calendarYear = 2026;
 const dayCount = 31;
@@ -51,7 +51,18 @@ const days = Array.from({ length: dayCount }, (_, index) => {
   const caption = document.createElement("span");
   caption.className = "day__caption";
   caption.setAttribute("aria-hidden", "true");
-  node.append(button, caption);
+  node.append(button);
+  if (day === dayCount) {
+    const finale = document.createElement("div");
+    finale.className = "day__finale";
+    const title = document.createElement("span");
+    title.className = "day__finale-title";
+    title.textContent = "Новый год";
+    finale.append(caption, title);
+    node.append(finale);
+  } else {
+    node.append(caption);
+  }
   daysList.append(node);
   return { node, button, mark, caption };
 });
@@ -122,7 +133,7 @@ function refreshDays() {
     const opening = upcoming ? `Откроется ${openingTime(day, tomorrow)}` : null;
     const giftState = seen ? "подарок просмотрен" : ready ? "открыть подарок" : "подарок закрыт";
     button.setAttribute("aria-label", opening ? `${day} декабря. ${opening}` : `${day} декабря, ${giftState}`);
-    caption.textContent = opening ?? (ready ? "Можно открыть" : day === today ? "Сегодня" : day === dayCount ? "Новый год" : "");
+    caption.textContent = opening ?? (ready ? "Можно открыть" : day === today ? "Сегодня" : "");
     caption.hidden = !caption.textContent;
   });
 
