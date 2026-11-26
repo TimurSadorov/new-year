@@ -292,7 +292,7 @@ main::before {
   box-shadow: 0 3px 6px #0a142961, inset 0 1px #ffffff24;
   color: var(--cream);
   cursor: pointer;
-  transition: transform 160ms ease, border-color 160ms ease;
+  transition: transform 160ms ease, border-color 160ms ease, filter 160ms ease;
 }
 
 .day__button::before {
@@ -311,7 +311,6 @@ main::before {
   pointer-events: none;
 }
 
-.day__button:hover { border-color: color-mix(in srgb, var(--bulb-color), var(--cream)); }
 .day__button:active { transform: scale(0.97); }
 .day__number { font: 400 1.29rem/1 Georgia, "Times New Roman", serif; font-variant-numeric: lining-nums; }
 
@@ -331,6 +330,11 @@ main::before {
 }
 
 .day__button[data-upcoming] { border-color: #c8af80b8; }
+
+@media (hover: hover) {
+  .day__button:hover { border-color: color-mix(in srgb, var(--bulb-color), var(--cream)); }
+  .day__button[data-open="true"]:hover { filter: brightness(1.12); }
+}
 
 .day__mark {
   position: absolute;
