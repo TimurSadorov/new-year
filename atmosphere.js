@@ -164,9 +164,9 @@ function setUpMusic() {
   const toggle = document.querySelector("#music-toggle");
   const preferenceKey = "sweet-december:music";
   const recordings = {
-    dawn: "./assets/morning-snow.m4a",
-    day: "./assets/sunlit-path.m4a",
-    night: "./assets/winter-waltz.m4a",
+    dawn: "./assets/morning-snow.m4a?v=2",
+    day: "./assets/sunlit-path.m4a?v=2",
+    night: "./assets/winter-waltz.m4a?v=2",
   };
   let enabled = true;
 
