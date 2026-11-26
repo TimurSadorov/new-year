@@ -1,4 +1,5 @@
 import { mountTrail } from "./trail.js?v=4";
+import { prepareGiftSalute, playGiftSalute, stopGiftSalute } from "./gift-salute.js";
 
 const calendarYear = 2026;
 const dayCount = 31;
@@ -17,13 +18,38 @@ const giftTitle = document.querySelector("#gift-title");
 const giftDate = document.querySelector("#gift-date");
 const giftMessage = document.querySelector("#gift-message");
 const fireworks = document.querySelector("#gift-fireworks");
+const finaleOverlay = document.querySelector("#gift-finale");
+const finaleFireworks = document.querySelector("#finale-fireworks");
 const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
+
+const goldSparks = ["#fff5d0", "#ffcb76", "#ff9d58"];
+const roseSparks = ["#fff0dc", "#ffc3d2", "#ffb767"];
+const blueSparks = ["#fff3cb", "#afe0ff", "#ffd583"];
+const violetSparks = ["#f9e8ff", "#c6aafe", "#ffe8b0"];
+const giftBursts = [
+  { x: 0.50, y: 0.40, delay: 370, reach: 0.34, colors: goldSparks },
+  { x: 0.24, y: 0.49, delay: 560, reach: 0.23, colors: roseSparks },
+  { x: 0.77, y: 0.40, delay: 700, reach: 0.24, colors: blueSparks },
+];
+const finaleBursts = [
+  { x: 0.19, y: 0.30, delay: 160, reach: 0.27, colors: goldSparks },
+  { x: 0.80, y: 0.23, delay: 420, reach: 0.24, colors: blueSparks },
+  { x: 0.25, y: 0.73, delay: 710, reach: 0.29, colors: violetSparks },
+  { x: 0.72, y: 0.71, delay: 980, reach: 0.30, colors: roseSparks },
+  { x: 0.52, y: 0.20, delay: 1260, reach: 0.27, colors: goldSparks },
+  { x: 0.14, y: 0.52, delay: 1550, reach: 0.26, colors: blueSparks },
+  { x: 0.86, y: 0.55, delay: 1810, reach: 0.28, colors: violetSparks },
+  { x: 0.48, y: 0.81, delay: 2150, reach: 0.27, colors: goldSparks },
+  { x: 0.32, y: 0.28, delay: 2450, reach: 0.30, colors: roseSparks },
+  { x: 0.68, y: 0.30, delay: 2690, reach: 0.32, colors: goldSparks },
+];
 
 let viewed = readViewedDays();
 let giftRequest;
 let selection = 0;
 let renderedDate;
 let fireworksFrame = 0;
+let celebrationTimer;
 
 document.querySelector("#edition").textContent = `Декабрь ${calendarYear}`;
 document.querySelector("#preview-badge").hidden = !preview;
@@ -168,6 +194,7 @@ async function openDay(day) {
   checkDate();
 
   if (showLockedDay(day)) return;
+  if (!viewed.has(day)) prepareGiftSalute();
 
   // Preview always uses sample cards, even after the real gifts are added.
   const gift = preview
@@ -208,39 +235,56 @@ function showDialog(day, title, message, image, firstOpening = false) {
   } else {
     giftImage.removeAttribute("src");
   }
-  const celebrate = firstOpening && !reducedMotion.matches;
-  dialog.toggleAttribute("data-celebrate", celebrate);
+  const finale = firstOpening && day === dayCount;
+  const animate = firstOpening && !reducedMotion.matches;
+  dialog.toggleAttribute("data-celebrate", animate && !finale);
+  dialog.toggleAttribute("data-finale", finale);
+  finaleOverlay.hidden = !finale;
+  if (finale) dialog.setAttribute("aria-labelledby", "gift-finale-title");
   if (!dialog.open) dialog.showModal();
-  if (celebrate) playGiftFireworks();
+
+  if (firstOpening) {
+    const bursts = finale ? finaleBursts : giftBursts;
+    const lifetime = finale ? 1180 : 980;
+    playGiftSalute(bursts);
+    if (animate) playGiftFireworks(finale ? finaleFireworks : fireworks, bursts, lifetime, finale ? 48 : 26);
+    celebrationTimer = window.setTimeout(stopGiftCelebration, bursts.at(-1).delay + lifetime);
+  }
 }
 
-function stopGiftCelebration() {
+function stopGiftAnimation() {
   cancelAnimationFrame(fireworksFrame);
   dialog.removeAttribute("data-celebrate");
   fireworks.width = 0;
+  finaleFireworks.width = 0;
 }
 
-function playGiftFireworks() {
-  const width = fireworks.clientWidth;
-  const height = fireworks.clientHeight;
-  const context = fireworks.getContext("2d");
+function stopGiftCelebration() {
+  clearTimeout(celebrationTimer);
+  stopGiftSalute();
+  stopGiftAnimation();
+  finaleOverlay.hidden = true;
+  dialog.removeAttribute("data-finale");
+  dialog.setAttribute("aria-labelledby", "gift-title");
+}
+
+function playGiftFireworks(canvas, layout, lifetime, sparkCount) {
+  const width = canvas.clientWidth;
+  const height = canvas.clientHeight;
+  const context = canvas.getContext("2d");
   if (!context || !width || !height) return;
 
   const ratio = Math.min(window.devicePixelRatio || 1, 2);
-  fireworks.width = Math.round(width * ratio);
-  fireworks.height = Math.round(height * ratio);
+  canvas.width = Math.round(width * ratio);
+  canvas.height = Math.round(height * ratio);
   context.scale(ratio, ratio);
   context.lineCap = "round";
   context.globalCompositeOperation = "lighter";
 
-  const bursts = [
-    { x: 0.50, y: 0.40, delay: 370, reach: 0.34, colors: ["#fff5d0", "#ffcb76", "#ff9d58"] },
-    { x: 0.24, y: 0.49, delay: 560, reach: 0.23, colors: ["#fff0dc", "#ffc3d2", "#ffb767"] },
-    { x: 0.77, y: 0.40, delay: 700, reach: 0.24, colors: ["#fff3cb", "#afe0ff", "#ffd583"] },
-  ].map((burst) => ({
+  const bursts = layout.map((burst) => ({
     ...burst,
-    sparks: Array.from({ length: 26 }, (_, index) => {
-      const angle = (index + Math.random() * 0.72) / 26 * Math.PI * 2;
+    sparks: Array.from({ length: sparkCount }, (_, index) => {
+      const angle = (index + Math.random() * 0.72) / sparkCount * Math.PI * 2;
       const distance = Math.min(width, height) * burst.reach * (0.45 + Math.random() * 0.55);
       return {
         dx: Math.cos(angle) * distance,
@@ -252,7 +296,6 @@ function playGiftFireworks() {
   }));
 
   const start = performance.now();
-  const lifetime = 980;
 
   function draw(now) {
     const elapsed = now - start;
@@ -289,7 +332,6 @@ function playGiftFireworks() {
     }
 
     if (elapsed < bursts.at(-1).delay + lifetime) fireworksFrame = requestAnimationFrame(draw);
-    else stopGiftCelebration();
   }
 
   fireworksFrame = requestAnimationFrame(draw);
@@ -299,7 +341,7 @@ giftImage.addEventListener("error", () => {
   if (giftArt.hidden) return;
   if (giftImage.hasAttribute("data-placeholder")) {
     giftArt.hidden = true;
-    stopGiftCelebration();
+    if (!dialog.hasAttribute("data-finale")) stopGiftCelebration();
     return;
   }
   giftImage.setAttribute("data-placeholder", "");
@@ -311,7 +353,7 @@ dialog.addEventListener("close", () => {
   if (!dialog.open) stopGiftCelebration();
 });
 reducedMotion.addEventListener("change", (event) => {
-  if (event.matches) stopGiftCelebration();
+  if (event.matches) stopGiftAnimation();
 });
 dialog.addEventListener("click", (event) => {
   if (event.target !== dialog) return;
