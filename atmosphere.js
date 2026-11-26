@@ -38,9 +38,9 @@ function setUpSnow() {
 
   const reducedMotion = window.matchMedia("(prefers-reduced-motion: reduce)");
   const climates = {
-    dawn: { spacing: 2300, min: 230, max: 620, fall: 29, speed: 61, wind: 119, gust: 52, streak: 0.042 },
-    day: { spacing: 2600, min: 205, max: 550, fall: 18, speed: 39, wind: 8, gust: 10, streak: 0 },
-    night: { spacing: 3250, min: 155, max: 460, fall: 8, speed: 24, wind: 2, gust: 3, streak: 0 },
+    dawn: { spacing: 1800, min: 280, max: 760, fall: 29, speed: 61, wind: 119, gust: 52, streak: 0.042 },
+    day: { spacing: 2050, min: 255, max: 680, fall: 18, speed: 39, wind: 8, gust: 10, streak: 0 },
+    night: { spacing: 2500, min: 205, max: 595, fall: 8, speed: 24, wind: 2, gust: 3, streak: 0 },
   };
   let width;
   let height;
@@ -71,9 +71,9 @@ function setUpSnow() {
       flakes.push({
         x: Math.random() * width,
         y: Math.random() * height,
-        radius: 0.48 + depth * 1.22,
+        radius: 0.58 + depth * 1.12,
         depth,
-        opacity: 0.29 + depth * 0.56,
+        opacity: 0.64 + depth * 0.32,
         phase: Math.random() * Math.PI * 2,
       });
     }
@@ -109,10 +109,10 @@ function setUpSnow() {
       context.beginPath();
       context.arc(flake.x, flake.y, flake.radius, 0, Math.PI * 2);
       context.fill();
-      if (daylight && flake.radius > 1.12) {
-        context.globalAlpha = flake.opacity * 0.43;
-        context.strokeStyle = "#52738f";
-        context.lineWidth = 0.35;
+      if (daylight && flake.radius > 0.86) {
+        context.globalAlpha = flake.opacity * 0.58;
+        context.strokeStyle = "#6988a4";
+        context.lineWidth = 0.5;
         context.stroke();
       }
     }

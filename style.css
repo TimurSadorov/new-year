@@ -78,6 +78,7 @@ button { font: inherit; }
   position: absolute;
   aspect-ratio: 440 / 293;
   background: url("./assets/window-frost.png?v=2") center / contain no-repeat;
+  filter: drop-shadow(0 0 0.7px #dbeeffb3);
 }
 
 .window-frost::before {
@@ -90,7 +91,7 @@ button { font: inherit; }
   top: 0;
   right: 0;
   width: clamp(9rem, 23vw, 21rem);
-  opacity: 0.78;
+  opacity: 0.9;
   transform: rotate(180deg);
 }
 
